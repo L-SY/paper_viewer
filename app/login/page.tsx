@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { AuthForm } from "@/components/auth-form";
+import { AuthShell } from "@/components/auth-shell";
 
 export const metadata: Metadata = { title: "登录" };
 
-export default function LoginPage() {
+type Query = Record<string, string | string[] | undefined>;
+const first = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
+
+export default async function LoginPage({ searchParams }: { searchParams: Promise<Query> }) {
+  const query = await searchParams;
+  const requestedMode = first(query.mode);
+  const initialMode = requestedMode === "signup" || requestedMode === "forgot" ? requestedMode : "signin";
+  const callbackError = first(query.error);
+  const initialMessage = callbackError === "verification_failed" ? "邮箱验证链接无效或已经过期，请重新发送。" : callbackError === "invalid_callback" ? "登录链接不完整，请重新操作。" : null;
   return (
-    <main className="auth-page">
-      <section className="auth-panel">
-        <Link className="brand" href="/"><span className="brand-mark">P</span><span><strong>PaperView</strong><small>月度科研评阅</small></span></Link>
-        <div className="auth-box"><div className="eyebrow">WELCOME BACK</div><h1>登录你的课题组</h1><p>提交每月计划与论文，查看可追溯的 AI 评阅和导师反馈。</p><AuthForm /></div>
-      </section>
-      <section className="auth-visual" aria-hidden="true">
-        <div className="auth-demo"><div className="auth-demo-top"><strong>2026年7月 · 课题组总览</strong><span>12 位成员</span></div><div className="auth-demo-body"><div className="auth-demo-title" /><div className="auth-demo-line short" /><div className="auth-demo-metrics"><div>8</div><div>4</div><div>8.1</div></div>{[0, 1, 2, 3, 4].map((row) => <div className="auth-demo-row" key={row}><span /><span /><span /><span /><span /></div>)}</div></div>
-      </section>
-    </main>
+    <AuthShell eyebrow="ACCOUNT" title="进入 PaperView" description="使用一个经过验证的邮箱进入你的课题组。">
+      <AuthForm initialMode={initialMode} initialInvite={first(query.invite) || ""} next={first(query.next) || "/"} initialMessage={initialMessage} />
+    </AuthShell>
   );
 }

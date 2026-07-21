@@ -1,7 +1,18 @@
 import type { Metadata } from "next";
 import { PlaceholderPage } from "@/components/placeholder-page";
+import { InviteMemberForm } from "@/components/invite-member-form";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "课题组" };
-export default function GroupPage() {
-  return <PlaceholderPage eyebrow="E3 LAB / MEMBERS" title="课题组管理" description="导师通过邀请链接添加成员，并管理月度截止日期与毕业归档状态。"><div className="dashboard-lower"><section><div className="section-heading"><div><h2>成员邀请</h2><p>邀请链接只允许加入当前课题组，并设置有效期。</p></div><button className="button button-primary" type="button">创建邀请链接</button></div></section><section><dl className="settings-list"><div><dt>计划截止</dt><dd>每月 5日 23:59</dd></div><div><dt>论文截止</dt><dd>每月最后一天</dd></div><div><dt>时区</dt><dd className="mono">Asia/Shanghai</dd></div></dl></section></div></PlaceholderPage>;
+export default async function GroupPage() {
+  let groupId: string | null = null;
+  const supabase = await createSupabaseServerClient();
+  if (supabase) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from("group_members").select("group_id, role").eq("user_id", user.id).eq("status", "active").eq("role", "teacher").limit(1).maybeSingle();
+      groupId = data?.group_id || null;
+    }
+  }
+  return <PlaceholderPage eyebrow="E3 LAB" title="课题组" description="成员、邀请与月度规则。"><div className="group-layout"><section><div className="section-heading"><div><h2>邀请成员</h2><p>邀请码只保存哈希，原始链接仅在创建时显示一次。</p></div></div><InviteMemberForm groupId={groupId} /></section><aside><div className="section-heading"><div><h2>月度规则</h2></div></div><dl className="settings-list"><div><dt>计划截止</dt><dd>每月 5日 23:59</dd></div><div><dt>论文截止</dt><dd>每月最后一天</dd></div><div><dt>AI 评阅</dt><dd>最多 3 次</dd></div><div><dt>可见范围</dt><dd>组内公开</dd></div></dl></aside></div></PlaceholderPage>;
 }

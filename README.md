@@ -11,6 +11,7 @@
 - 六维 AI 评分、页码证据和导师独立评分详情
 - 论文档案、评分趋势和课题组管理入口
 - Supabase 邮箱注册/登录适配器
+- 邮箱验证、忘记密码、个人资料初始化和课题组邀请接受流程
 - PostgreSQL 数据模型、RLS 权限和私有 PDF bucket 策略
 
 Supabase 尚未配置时，页面会明确显示“演示数据”，便于先完成界面与流程验证。
@@ -38,10 +39,13 @@ npm run dev
 ## 接入 Supabase
 
 1. 创建一个 Supabase 项目。
-2. 在 SQL Editor 执行 `supabase/migrations/202607210001_initial.sql`。
+2. 在 SQL Editor 按文件名顺序执行 `supabase/migrations/` 中的迁移。
 3. 从 `.env.example` 创建 `.env.local`，填写项目 URL 和 anon key。
 4. 在 Supabase Auth 中启用 Email provider 和邮箱验证。
-5. 保持 `monthly-papers` bucket 为 private；迁移会创建 bucket 与访问策略。
+5. 在 Auth URL Configuration 中加入本地和正式域名的 `/auth/callback` 地址。
+6. 保持 `monthly-papers` bucket 为 private；迁移会创建 bucket 与访问策略。
+
+注册链路为：创建账号 → 验证邮箱 → 完善个人资料 → 接受课题组邀请。邀请码原文只在导师创建时返回一次，数据库只保存 SHA-256 哈希，并可选绑定受邀邮箱。
 
 `SUPABASE_SERVICE_ROLE_KEY` 和所有 AI API key 只能放在服务端环境，绝不能使用 `NEXT_PUBLIC_` 前缀。
 
