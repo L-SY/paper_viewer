@@ -43,7 +43,7 @@ npm run dev
 
 1. 创建一个 Supabase 项目。
 2. 在 SQL Editor 按文件名顺序执行 `supabase/migrations/` 中的迁移。
-3. 从 `.env.example` 创建 `.env.local`，填写项目 URL 和 anon key。
+3. 从 `.env.example` 创建 `.env.local`，填写项目 URL、publishable key 和仅服务端使用的 secret key。
 4. 在 Supabase Auth 中启用 Email provider 和邮箱验证。
 5. 在 Auth URL Configuration 中加入本地和正式域名的 `/auth/callback` 地址。
 6. 保持 `monthly-papers` bucket 为 private；迁移会创建 bucket 与访问策略。
@@ -61,7 +61,7 @@ npm run dev
 
 要向 Gmail、Outlook 和 QQ 邮箱稳定投递，需要在邮件服务中验证自己的域名并配置 SPF、DKIM、DMARC。不要使用个人邮箱密码作为服务端密钥。
 
-`SUPABASE_SERVICE_ROLE_KEY` 和所有 AI API key 只能放在服务端环境，绝不能使用 `NEXT_PUBLIC_` 前缀。
+`SUPABASE_SECRET_KEY` 和所有 AI API key 只能放在服务端环境，绝不能使用 `NEXT_PUBLIC_` 前缀。代码仍兼容 Supabase 旧版 anon/service_role 密钥名。
 
 ## 评阅数据约定
 
