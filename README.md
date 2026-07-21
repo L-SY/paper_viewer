@@ -12,6 +12,9 @@
 - 论文档案、评分趋势和课题组管理入口
 - Supabase 邮箱注册/登录适配器
 - 邮箱验证、忘记密码、个人资料初始化和课题组邀请接受流程
+- 独立的导师工作台与学生工作台，登录后按组内身份分流
+- 学生计划与 PDF 版本写入、导师评语写入和课题组规则写入
+- Resend 邀请邮件与月度计划/论文提醒接口
 - PostgreSQL 数据模型、RLS 权限和私有 PDF bucket 策略
 
 Supabase 尚未配置时，页面会明确显示“演示数据”，便于先完成界面与流程验证。
@@ -46,6 +49,17 @@ npm run dev
 6. 保持 `monthly-papers` bucket 为 private；迁移会创建 bucket 与访问策略。
 
 注册链路为：创建账号 → 验证邮箱 → 完善个人资料 → 接受课题组邀请。邀请码原文只在导师创建时返回一次，数据库只保存 SHA-256 哈希，并可选绑定受邀邮箱。
+
+## 邮件发送
+
+邮件分为两类：
+
+- 注册验证和密码重置由 Supabase Auth 发送。正式使用前必须在 Supabase Authentication → SMTP Settings 配置自定义 SMTP；默认邮件服务只适合开发测试。`supabase/templates/` 中提供了确认邮箱和重置密码模板。
+- 课题组邀请和月度提醒通过 Resend API 发送。设置 `RESEND_API_KEY`、`EMAIL_FROM` 和已验证的发件域名后，导师填写受邀邮箱即可自动发信。
+
+`POST /api/reminders/monthly` 用于每日定时任务，请求必须带 `Authorization: Bearer <CRON_SECRET>`。接口只在截止日前两天为尚未提交的学生发送一次提醒，并用数据库幂等键避免重复发送。
+
+要向 Gmail、Outlook 和 QQ 邮箱稳定投递，需要在邮件服务中验证自己的域名并配置 SPF、DKIM、DMARC。不要使用个人邮箱密码作为服务端密钥。
 
 `SUPABASE_SERVICE_ROLE_KEY` 和所有 AI API key 只能放在服务端环境，绝不能使用 `NEXT_PUBLIC_` 前缀。
 

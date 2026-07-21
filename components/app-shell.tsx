@@ -3,38 +3,39 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { SidebarNav } from "./sidebar-nav";
 import { AccountFooter } from "./account-footer";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentMembership, type AppRole } from "@/lib/auth/current-membership";
 
-export async function AppShell({ children }: { children: ReactNode }) {
-  const supabase = await createSupabaseServerClient();
-  let displayName = "林老师";
+export async function AppShell({ children, surface }: { children: ReactNode; surface?: AppRole }) {
+  const session = await getCurrentMembership();
+  let role: AppRole = surface || "teacher";
+  let displayName = role === "teacher" ? "林老师" : "陈雨航";
   let email = "演示账号";
-  let role = "导师";
 
-  if (supabase) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/login");
-
-    const [{ data: profile }, { data: membership }] = await Promise.all([
-      supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
-      supabase.from("group_members").select("role").eq("user_id", user.id).eq("status", "active").limit(1).maybeSingle(),
-    ]);
-    displayName = profile?.display_name || user.user_metadata.display_name || user.email?.split("@")[0] || "用户";
-    email = user.email || "";
-    role = membership?.role === "teacher" ? "导师" : membership?.role === "student" ? "学生" : "未加入组";
+  if (session.configured) {
+    if (!session.user) redirect("/login");
+    const membershipRole = session.membership?.role as AppRole | undefined;
+    if (membershipRole) role = membershipRole;
+    if (surface && membershipRole && surface !== membershipRole) redirect(membershipRole === "teacher" ? "/teacher" : "/student");
+    displayName = session.profile?.display_name || session.user.user_metadata.display_name || session.user.email?.split("@")[0] || "用户";
+    email = session.user.email || "";
   }
 
+  const roleLabel = role === "teacher" ? "导师" : "学生";
+  const homeHref = role === "teacher" ? "/teacher" : "/student";
+  const groupName = session.group?.name || "E3 Lab";
+  const groupMark = groupName.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 2).toUpperCase() || "组";
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Link className="brand" href="/" aria-label="PaperView 首页">
+        <Link className="brand" href={homeHref} aria-label={`PaperView ${roleLabel}首页`}>
           <span className="brand-mark">P</span>
-          <span><strong>PaperView</strong><small>月度科研评阅</small></span>
+          <span><strong>PaperView</strong><small>{roleLabel}端 · 月度科研评阅</small></span>
         </Link>
-        <SidebarNav />
+        <SidebarNav role={role} />
         <div className="sidebar-footer">
-          <div className="group-chip"><span>E3</span><div><strong>E3 Lab</strong><small>当前课题组</small></div></div>
-          <AccountFooter configured={Boolean(supabase)} displayName={displayName} email={email} role={role} />
+          {!session.configured && <div className="demo-role-switch"><Link className={role === "teacher" ? "active" : ""} href="/teacher">导师端</Link><Link className={role === "student" ? "active" : ""} href="/student">学生端</Link></div>}
+          <div className="group-chip"><span>{groupMark}</span><div><strong>{groupName}</strong><small>当前课题组</small></div></div>
+          <AccountFooter configured={session.configured} displayName={displayName} email={email} role={roleLabel} />
         </div>
       </aside>
       <main className="main-content">{children}</main>

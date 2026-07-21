@@ -1,0 +1,44 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { AppShell } from "@/components/app-shell";
+import { getCurrentMembership } from "@/lib/auth/current-membership";
+import { getMonthContext } from "@/lib/monthly-time";
+
+export const metadata: Metadata = { title: "导师评阅队列" };
+
+type QueueRow = { id: string; student: string; title: string; submittedAt: string; aiScore: number | null };
+
+export default async function TeacherReviewsPage() {
+  const session = await getCurrentMembership();
+  let demo = true;
+  let rows: QueueRow[] = [
+    { id: "chen-yuhang", student: "周思琪", title: "多模态感知中的时序对齐实验", submittedAt: "07-20 20:41", aiScore: 7.6 },
+    { id: "chen-yuhang", student: "王泽宇", title: "灵巧手抓取失败案例分析", submittedAt: "07-19 23:08", aiScore: 8.7 },
+  ];
+
+  if (session.configured && session.user && session.membership?.role === "teacher") {
+    demo = false;
+    const month = getMonthContext(session.group?.timezone || "Asia/Shanghai");
+    const { data: records } = await session.supabase.from("monthly_records").select("student_id, official_version_id, status").eq("group_id", session.membership.group_id).eq("research_month", month.monthKey).not("official_version_id", "is", null).neq("status", "completed");
+    const versionIds = (records || []).flatMap((record) => record.official_version_id ? [record.official_version_id] : []);
+    const studentIds = (records || []).map((record) => record.student_id);
+    const [{ data: versions }, { data: profiles }, { data: aiReviews }] = await Promise.all([
+      versionIds.length ? session.supabase.from("submission_versions").select("id, title, submitted_at").in("id", versionIds) : Promise.resolve({ data: [] }),
+      studentIds.length ? session.supabase.from("profiles").select("id, display_name").in("id", studentIds) : Promise.resolve({ data: [] }),
+      versionIds.length ? session.supabase.from("ai_reviews").select("submission_version_id, total_score, completed_at").in("submission_version_id", versionIds).eq("status", "completed").order("completed_at", { ascending: false }) : Promise.resolve({ data: [] }),
+    ]);
+    const versionMap = new Map((versions || []).map((version) => [version.id, version]));
+    const profileMap = new Map((profiles || []).map((profile) => [profile.id, profile.display_name]));
+    const aiMap = new Map<string, number>();
+    for (const review of aiReviews || []) if (review.total_score != null && !aiMap.has(review.submission_version_id)) aiMap.set(review.submission_version_id, Number(review.total_score));
+    const formatter = new Intl.DateTimeFormat("zh-CN", { timeZone: session.group?.timezone || "Asia/Shanghai", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
+    rows = (records || []).flatMap((record) => {
+      const id = record.official_version_id;
+      const version = id ? versionMap.get(id) : null;
+      if (!id || !version) return [];
+      return [{ id, student: profileMap.get(record.student_id) || "未命名学生", title: version.title, submittedAt: formatter.format(new Date(version.submitted_at)).replaceAll("/", "-"), aiScore: aiMap.get(id) ?? null }];
+    });
+  }
+
+  return <AppShell surface="teacher"><header className="page-header"><div><div className="eyebrow">导师端 / REVIEWS {demo && <span className="demo-tag">演示</span>}</div><h1>评阅队列</h1><p>AI 评阅完成后进入导师评语环节，两套评分相互独立。</p></div></header><section className="content-section">{rows.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>学生</th><th>论文</th><th>提交时间</th><th>AI 分数</th><th>状态</th><th /></tr></thead><tbody>{rows.map((row) => <tr key={`${row.id}-${row.student}`}><td>{row.student}</td><td>{row.title}</td><td className="mono">{row.submittedAt}</td><td>{row.aiScore == null ? <span className="muted-text">—</span> : <strong className="score">{row.aiScore.toFixed(1)}</strong>}</td><td><span className={`status-pill ${row.aiScore == null ? "submitted" : "awaiting"}`}>{row.aiScore == null ? "AI评阅中" : "待评语"}</span></td><td className="action-cell">{row.aiScore == null ? <span className="muted-text">等待AI</span> : <Link className="text-link" href={`/papers/${row.id}`}>开始评阅</Link>}</td></tr>)}</tbody></table></div> : <p className="empty-copy">本月暂时没有等待导师处理的论文。</p>}</section></AppShell>;
+}
