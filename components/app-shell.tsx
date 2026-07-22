@@ -17,6 +17,7 @@ export async function AppShell({ children, surface }: { children: ReactNode; sur
     if (!session.user) redirect("/login");
     const membershipRole = session.membership?.role as AppRole | undefined;
     if (membershipRole) role = membershipRole;
+    else if (!surface) role = session.user.user_metadata.preferred_role === "teacher" ? "teacher" : "student";
     if (surface && membershipRole && surface !== membershipRole) redirect(membershipRole === "teacher" ? "/teacher" : "/student");
     availableRoles = Array.from(new Set(session.memberships.map((membership) => membership.role as AppRole)));
     if (!availableRoles.length) availableRoles = [role];
