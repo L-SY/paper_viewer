@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export function OnboardingForm({ initialInvite = "", initialDisplayName = "", initialDiscipline = "", initialResearchStage = "exploring" }: { initialInvite?: string; initialDisplayName?: string; initialDiscipline?: string; initialResearchStage?: string }) {
+type OnboardingRole = "student" | "teacher";
+
+export function OnboardingForm({ initialInvite = "", initialDisplayName = "", initialDiscipline = "", initialResearchStage = "exploring", initialRole = "student" }: { initialInvite?: string; initialDisplayName?: string; initialDiscipline?: string; initialResearchStage?: string; initialRole?: OnboardingRole }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
@@ -29,6 +31,12 @@ export function OnboardingForm({ initialInvite = "", initialDisplayName = "", in
       research_stage: String(form.get("researchStage") ?? "exploring"),
       onboarding_completed: true,
     };
+    const preferredRole: OnboardingRole = form.get("preferredRole") === "teacher" ? "teacher" : "student";
+    const { error: metadataError } = await supabase.auth.updateUser({ data: { preferred_role: preferredRole } });
+    if (metadataError) {
+      setLoading(false);
+      return setMessage(metadataError.message);
+    }
     const { error: profileError } = await supabase.from("profiles").update(profile).eq("id", user.id);
     if (profileError) {
       setLoading(false);
@@ -45,13 +53,14 @@ export function OnboardingForm({ initialInvite = "", initialDisplayName = "", in
     }
 
     setLoading(false);
-    router.replace(invite ? "/" : "/group?setup=1");
+    router.replace(invite ? "/" : `/group?setup=${preferredRole}`);
     router.refresh();
   }
 
   return (
     <form className="auth-form" onSubmit={submit}>
       <label>姓名<input className="text-input" name="displayName" type="text" defaultValue={initialDisplayName} placeholder="在组内显示的姓名" maxLength={40} required /></label>
+      <fieldset className="role-choice"><legend>主要身份</legend><div><label><input type="radio" name="preferredRole" value="student" defaultChecked={initialRole === "student"} /><span><strong>学生</strong><small>使用邀请码加入课题组</small></span></label><label><input type="radio" name="preferredRole" value="teacher" defaultChecked={initialRole === "teacher"} /><span><strong>导师</strong><small>创建或管理课题组</small></span></label></div></fieldset>
       <label>学科或研究方向<input className="text-input" name="discipline" type="text" defaultValue={initialDiscipline} placeholder="例如：机器人、材料、计算机视觉" maxLength={80} /></label>
       <label>当前阶段<select className="text-input" name="researchStage" defaultValue={initialResearchStage}><option value="exploring">探索阶段 / 尚未开题</option><option value="proposal">开题准备</option><option value="research">课题研究中</option><option value="writing">论文写作中</option></select></label>
       <label>课题组邀请码 <span className="optional">可稍后填写</span><input className="text-input mono" name="invite" type="text" defaultValue={initialInvite} placeholder="由导师提供" /></label>

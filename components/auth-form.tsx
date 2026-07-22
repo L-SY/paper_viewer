@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type AuthMode = "signin" | "signup" | "forgot";
+type SignupRole = "student" | "teacher";
 
 function friendlyAuthError(message: string) {
   if (message.includes("Invalid login credentials")) return "邮箱或密码不正确。";
@@ -62,6 +63,7 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
     }
 
     const displayName = String(form.get("displayName") ?? "").trim();
+    const preferredRole = (form.get("preferredRole") === "teacher" ? "teacher" : "student") satisfies SignupRole;
     const confirmation = String(form.get("passwordConfirmation") ?? "");
     const invite = String(form.get("invite") ?? "").trim();
     if (password !== confirmation) {
@@ -76,7 +78,7 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
       email,
       password,
       options: {
-        data: { display_name: displayName },
+        data: { display_name: displayName, preferred_role: preferredRole },
         emailRedirectTo: callback.toString(),
       },
     });
@@ -95,6 +97,7 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
     <>
       <form className="auth-form" onSubmit={handleSubmit}>
         {mode === "signup" && <label>姓名<input className="text-input" type="text" name="displayName" placeholder="在组内显示的姓名" autoComplete="name" maxLength={40} required /></label>}
+        {mode === "signup" && <fieldset className="role-choice"><legend>注册身份</legend><div><label><input type="radio" name="preferredRole" value="student" defaultChecked /><span><strong>学生</strong><small>加入导师创建的课题组</small></span></label><label><input type="radio" name="preferredRole" value="teacher" /><span><strong>导师</strong><small>创建并管理课题组</small></span></label></div><p>用于确定首次进入的工作台；组内权限仍由课题组身份决定。</p></fieldset>}
         <label>邮箱<input className="text-input" type="email" name="email" placeholder="name@example.com" autoComplete="email" required /></label>
         {mode !== "forgot" && (
           <label>

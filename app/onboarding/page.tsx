@@ -10,6 +10,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
   let displayName = "";
   let discipline = "";
   let researchStage = "exploring";
+  let role: "student" | "teacher" = "student";
   const supabase = await createSupabaseServerClient();
   if (supabase) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -18,7 +19,8 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
       displayName = data?.display_name || user.user_metadata.display_name || "";
       discipline = data?.discipline || "";
       researchStage = data?.research_stage || "exploring";
+      role = user.user_metadata.preferred_role === "teacher" ? "teacher" : "student";
     }
   }
-  return <AuthShell eyebrow="PROFILE" title="完善个人资料" description="这些信息只用于组内识别，不参与 AI 评分。"><OnboardingForm initialInvite={invite || ""} initialDisplayName={displayName} initialDiscipline={discipline} initialResearchStage={researchStage} /></AuthShell>;
+  return <AuthShell eyebrow="PROFILE" title="完善个人资料" description="选择首次使用的身份；加入课题组后，实际权限由组内身份决定。"><OnboardingForm initialInvite={invite || ""} initialDisplayName={displayName} initialDiscipline={discipline} initialResearchStage={researchStage} initialRole={role} /></AuthShell>;
 }

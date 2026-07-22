@@ -7,5 +7,7 @@ export default async function Home() {
   if (!session.user) redirect("/login");
   if (session.membership?.role === "student") redirect("/student");
   if (session.membership?.role === "teacher") redirect("/teacher");
-  redirect("/group?setup=1");
+  if (!session.profile?.onboarding_completed) redirect("/onboarding");
+  const preferredRole = session.user.user_metadata.preferred_role === "teacher" ? "teacher" : "student";
+  redirect(`/group?setup=${preferredRole}`);
 }
