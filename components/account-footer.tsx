@@ -15,8 +15,7 @@ export function AccountFooter({ configured, displayName, email, role }: { config
     if (!supabase) return router.push("/login");
     setLoading(true);
     await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
+    window.location.replace("/login");
   }
 
   return (

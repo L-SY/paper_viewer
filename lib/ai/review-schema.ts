@@ -3,13 +3,17 @@ import { z } from "zod";
 const evidenceSchema = z.object({
   page: z.number().int().positive(),
   observation: z.string().min(1),
-  kind: z.enum(["fact", "inference", "advice"]),
+  kind: z.enum(["fact", "inference"]),
 });
 
 const dimensionSchema = z.object({
-  score: z.number().min(1).max(10),
+  score: z.number().int().min(1).max(10),
   explanation: z.string().min(1),
-  evidence: z.array(evidenceSchema),
+  strengths: z.array(z.string().min(1)).max(2),
+  gaps: z.array(z.string().min(1)).max(2),
+  evidence: z.array(evidenceSchema).max(4),
+  next_action: z.string(),
+  confidence: z.enum(["high", "medium", "low"]),
 });
 
 export const aiReviewSchema = z.object({
@@ -19,10 +23,10 @@ export const aiReviewSchema = z.object({
   evidence_conclusion: dimensionSchema,
   analysis_reflection: dimensionSchema,
   academic_writing: dimensionSchema,
-  strengths: z.array(z.string()),
-  weaknesses: z.array(z.string()),
-  suggestions: z.array(z.string()),
-  uncertainty_notes: z.array(z.string()),
+  strengths: z.array(z.string().min(1)).min(1).max(4),
+  weaknesses: z.array(z.string().min(1)).min(1).max(3),
+  suggestions: z.array(z.string().min(1)).min(1).max(3),
+  uncertainty_notes: z.array(z.string().min(1)).max(4),
 });
 
 export type AiReview = z.infer<typeof aiReviewSchema>;

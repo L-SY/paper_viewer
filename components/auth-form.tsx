@@ -52,10 +52,12 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
 
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      setLoading(false);
-      if (error) return setMessage({ text: friendlyAuthError(error.message) });
-      router.replace(next.startsWith("/") && !next.startsWith("//") ? next : "/");
-      router.refresh();
+      if (error) {
+        setLoading(false);
+        return setMessage({ text: friendlyAuthError(error.message) });
+      }
+      const destination = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+      window.location.replace(destination);
       return;
     }
 
@@ -70,7 +72,7 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
     const callback = new URL("/auth/callback", window.location.origin);
     callback.searchParams.set("next", "/onboarding");
     if (invite) callback.searchParams.set("invite", invite);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -80,6 +82,9 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
     });
     setLoading(false);
     if (error) return setMessage({ text: friendlyAuthError(error.message) });
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return setMessage({ text: "这个邮箱已经注册。请直接登录，或使用“忘记密码”找回账号。" });
+    }
     const verifyUrl = new URL("/verify-email", window.location.origin);
     verifyUrl.searchParams.set("email", email);
     if (invite) verifyUrl.searchParams.set("invite", invite);

@@ -220,11 +220,37 @@ h3 { margin-bottom: 4px; font-size: 12px; }
 .dimension-row > div > span { display: block; height: 100%; background: var(--blue); }
 .dimension-row label { font-size: 9px; color: var(--text-2); }
 .dimension-row strong { text-align: right; font: 600 10px var(--font-geist-mono); }
+.dimension-details { display: flex; flex-direction: column; gap: 9px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.dimension-detail-card { border: 1px solid var(--border); border-radius: 5px; background: #fdfdfc; overflow: hidden; }
+.dimension-detail-card > header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 11px; background: #fafaf9; border-bottom: 1px solid var(--border); }
+.dimension-detail-card > header > div:first-child { display: flex; align-items: center; gap: 8px; }
+.dimension-detail-card > header strong { font-size: 10px; }
+.dimension-index { width: 25px; height: 20px; display: grid; place-items: center; border-radius: 3px; background: var(--blue-soft); color: var(--blue); font-size: 8px; font-weight: 700; }
+.dimension-detail-meta { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+.dimension-detail-meta > strong { font: 600 13px var(--font-geist-mono) !important; white-space: nowrap; }
+.dimension-detail-meta > strong small { color: var(--text-3); font-size: 8px; font-weight: 400; }
+.confidence-badge { padding: 3px 6px; border-radius: 999px; font-size: 8px; white-space: nowrap; }
+.confidence-badge.high { background: #e8f5ee; color: #26734d; }
+.confidence-badge.medium { background: #fff4dc; color: #8a5a00; }
+.confidence-badge.low { background: #fdebea; color: #a3423c; }
+.confidence-badge.missing { background: var(--surface); color: var(--text-3); }
+.dimension-detail-body { padding: 11px; }
+.dimension-explanation { margin: 0; color: #45433f; font-size: 10px; line-height: 1.7; }
+.dimension-findings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.dimension-findings > div > span, .dimension-evidence > span, .dimension-next-action > span { display: block; margin-bottom: 4px; color: var(--text-3); font-size: 8px; font-weight: 650; letter-spacing: .04em; }
+.dimension-findings ul { margin: 0; padding-left: 15px; }
+.dimension-findings li, .dimension-findings p { margin: 0; color: #5b5954; font-size: 9px; line-height: 1.6; }
+.dimension-evidence, .dimension-next-action { margin-top: 10px; padding-top: 9px; border-top: 1px solid #efefed; }
+.dimension-evidence p, .dimension-next-action p { margin: 4px 0 0; color: #5b5954; font-size: 9px; line-height: 1.6; }
+.dimension-evidence b { display: inline-block; margin-right: 6px; color: var(--blue); font: 600 8px var(--font-geist-mono); }
+.dimension-next-action p { color: #3f4f7d; }
+.dimension-history-note { margin: 0; padding: 10px 11px; color: var(--text-3); font-size: 9px; line-height: 1.6; }
 .review-block { padding: 14px 0; border-top: 1px solid var(--border); }
 .review-block:first-of-type { margin-top: 10px; }
 .review-block h3 { display: flex; align-items: center; gap: 7px; font-size: 11px; }
 .review-block h3 > span { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); }
 .review-block.warning h3 > span { background: var(--orange); }
+.review-block.uncertainty h3 > span { background: var(--text-3); }
 .review-block p, .review-block li { color: #55534f; font-size: 10px; line-height: 1.7; }
 .review-block p:last-child { margin-bottom: 0; }
 .review-block ul { margin: 7px 0 0; padding-left: 18px; }
@@ -391,6 +417,9 @@ h3 { margin-bottom: 4px; font-size: 12px; }
   .pdf-stage { padding: 15px; }
   .pdf-page { padding: 35px 32px; min-height: 650px; }
   .radar-and-scores { grid-template-columns: 1fr; }
+  .dimension-detail-card > header { align-items: flex-start; }
+  .dimension-detail-meta { align-items: flex-end; flex-direction: column-reverse; gap: 5px; }
+  .dimension-findings { grid-template-columns: 1fr; }
   .month-bar { grid-template-columns: 1fr; gap: 14px; padding: 14px 0; }
   .inline-metrics { justify-content: space-between; }
   .inline-metrics > div { flex: 1; text-align: left; padding-left: 10px; }
