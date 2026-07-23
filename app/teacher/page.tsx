@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { students, type DemoStudent, type StudentStatus } from "@/lib/demo-data";
 import { getCurrentMembership } from "@/lib/auth/current-membership";
-import { getMonthContext, shortTime } from "@/lib/monthly-time";
+import { getMonthContext } from "@/lib/monthly-time";
 
 export const metadata: Metadata = { title: "导师月度总览" };
 
@@ -25,13 +25,11 @@ export default async function TeacherDashboardPage() {
   let demo = true;
   let groupName = "E3 LAB";
   let month = getMonthContext();
-  let paperDeadlineTime = "23:59";
 
   if (session.configured && session.user && session.membership?.role === "teacher") {
     demo = false;
     groupName = session.group?.name || "课题组";
     month = getMonthContext(session.group?.timezone || "Asia/Shanghai");
-    paperDeadlineTime = shortTime(session.group?.paper_deadline_time);
     const groupId = session.membership.group_id;
     const [{ data: memberData }, { data: recordData }] = await Promise.all([
       session.supabase.from("group_members").select("user_id").eq("group_id", groupId).eq("role", "student").eq("status", "active"),
@@ -69,10 +67,9 @@ export default async function TeacherDashboardPage() {
 
   return (
     <AppShell surface="teacher">
-      <header className="page-header"><div><div className="eyebrow">导师端 / {groupName.toUpperCase()} {demo && <span className="demo-tag">演示</span>}</div><h1>{month.monthLabel}</h1><p>论文截止 {month.month}月{month.lastDay}日 {paperDeadlineTime} · 组内提交与评阅进度</p></div><div className="header-actions"><button className="button button-secondary" type="button">导出月度档案</button><Link className="button button-primary" href="/group">管理本月设置</Link></div></header>
+      <header className="page-header"><div><div className="eyebrow">导师端 / {groupName.toUpperCase()} {demo && <span className="demo-tag">演示</span>}</div><h1>{month.monthLabel}</h1></div></header>
       <section className="month-bar" aria-label="本月流程与统计"><div className="month-stage"><span>当前阶段</span><strong>月末论文提交</strong></div><ol className="simple-flow"><li className="done">计划</li><li className="active">论文</li><li>AI评阅</li><li>导师评语</li></ol><dl className="inline-metrics"><div><dt>已提交</dt><dd>{submitted}</dd></div><div><dt>待评语</dt><dd>{awaiting}</dd></div><div><dt>未提交</dt><dd>{missing}</dd></div><div><dt>AI均分</dt><dd>{average}</dd></div></dl></section>
-      <section className="content-section"><div className="section-heading"><div><h2>学生进度</h2><p>每名学生每月一条记录，所有 PDF 版本均保留。</p></div><div className="segmented" aria-label="进度筛选"><button className="selected" type="button">全部 {rows.length}</button><button type="button">待处理 {awaiting + missing}</button><button type="button">已完成 {rows.filter((row) => row.status === "completed").length}</button></div></div><div className="table-wrap"><table className="data-table"><thead><tr><th>学生</th><th>月初计划</th><th>论文版本</th><th>AI 评阅</th><th>导师评分</th><th>状态</th><th><span className="sr-only">操作</span></th></tr></thead><tbody>{rows.map((student) => <tr key={student.id}><td><div className="person-cell"><span className="avatar">{student.initials}</span><div><strong>{student.name}</strong><small>{student.topic}</small></div></div></td><td><span className={student.planDone ? "check-text" : "muted-text"}>{student.planDone ? "已填写" : "未填写"}</span></td><td className="mono">{student.version ? `v${student.version}` : "—"}</td><td>{student.aiScore ? <strong className="score">{student.aiScore.toFixed(1)}</strong> : <span className="muted-text">—</span>}</td><td>{student.mentorScore ? <strong className="score">{student.mentorScore.toFixed(1)}</strong> : <span className="muted-text">—</span>}</td><td><StatusPill status={student.status} /></td><td className="action-cell">{student.reviewId || student.id === "chen-yuhang" ? <Link className="text-link" href={`/papers/${student.reviewId || student.id}`}>查看评阅</Link> : <span className="muted-text">暂无论文</span>}</td></tr>)}</tbody></table></div></section>
-      <section className="content-section compact-section"><div className="section-heading"><div><h2>需要处理</h2><p>{awaiting} 篇论文等待导师评语，{missing} 名学生尚未提交。</p></div><Link className="text-link" href="/teacher/reviews">进入评阅队列</Link></div></section>
+      <section className="content-section"><div className="section-heading"><h2>学生进度</h2></div><div className="table-wrap"><table className="data-table"><thead><tr><th>学生</th><th>月初计划</th><th>论文版本</th><th>AI 评阅</th><th>导师评分</th><th>状态</th><th><span className="sr-only">操作</span></th></tr></thead><tbody>{rows.map((student) => <tr key={student.id}><td><div className="person-cell"><span className="avatar">{student.initials}</span><div><strong>{student.name}</strong><small>{student.topic}</small></div></div></td><td><span className={student.planDone ? "check-text" : "muted-text"}>{student.planDone ? "已填写" : "未填写"}</span></td><td className="mono">{student.version ? `v${student.version}` : "—"}</td><td>{student.aiScore ? <strong className="score">{student.aiScore.toFixed(1)}</strong> : <span className="muted-text">—</span>}</td><td>{student.mentorScore ? <strong className="score">{student.mentorScore.toFixed(1)}</strong> : <span className="muted-text">—</span>}</td><td><StatusPill status={student.status} /></td><td className="action-cell">{student.reviewId || student.id === "chen-yuhang" ? <Link className="text-link" href={`/papers/${student.reviewId || student.id}`}>查看评阅</Link> : <span className="muted-text">暂无论文</span>}</td></tr>)}</tbody></table></div></section>
     </AppShell>
   );
 }

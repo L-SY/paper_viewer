@@ -23,5 +23,5 @@ export default async function SubmitPage() {
       initialTitle = versions?.[0]?.title || "";
     }
   }
-  return <AppShell surface="student"><header className="page-header"><div><div className="eyebrow">学生端 / 2026.07</div><h1>计划与论文</h1><p>一个月一条主记录；上传新 PDF 时保留全部历史版本。</p></div></header><MonthlySubmissionForm initialPlan={initialPlan} initialTitle={initialTitle} initialVersions={initialVersions} demo={!session.configured} /></AppShell>;
+  return <AppShell surface="student"><header className="page-header"><div><div className="eyebrow">学生端 / 本月</div><h1>计划与论文</h1></div></header><MonthlySubmissionForm initialPlan={initialPlan} initialTitle={initialTitle} initialVersions={initialVersions} demo={!session.configured} /></AppShell>;
 }

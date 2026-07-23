@@ -19,5 +19,5 @@ export default async function ProfilePage() {
       }
     }
   }
-  return <AppShell><header className="page-header"><div><div className="eyebrow">ACCOUNT</div><h1>个人资料</h1><p>用于组内识别和档案展示。</p></div></header><section className="narrow-content"><ProfileForm values={values} /></section></AppShell>;
+  return <AppShell><header className="page-header"><div><div className="eyebrow">账号</div><h1>个人资料</h1></div></header><section className="narrow-content"><ProfileForm values={values} /></section></AppShell>;
 }

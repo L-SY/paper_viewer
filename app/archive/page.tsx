@@ -66,13 +66,11 @@ export default async function ArchivePage() {
     });
   }
 
-  const description = session.configured && !session.membership
-    ? "当前账号尚未加入课题组，加入后可以查看组内论文。"
-    : "按学生、月份和状态检索组内全部月度论文，毕业成员的记录将以只读方式保留。";
+  const emptyText = session.configured && !session.membership ? "尚未加入课题组。" : "暂无论文。";
 
   return (
-    <PlaceholderPage surface={role} eyebrow={`${role === "teacher" ? "导师端" : "学生端"} / ARCHIVE`} title={role === "teacher" ? "论文档案" : "组内论文"} description={description}>
-      {rows.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>月份</th><th>学生</th><th>论文标题</th><th>版本</th><th>AI</th><th>导师</th><th /></tr></thead><tbody>{rows.map((row) => <tr key={`${row.id}-${row.month}`}><td className="mono">{row.month}</td><td>{row.student}</td><td>{row.title}</td><td className="mono">v{row.version}</td><td className="score">{row.aiScore == null ? "—" : row.aiScore.toFixed(1)}</td><td className="score">{row.teacherScore == null ? "—" : row.teacherScore.toFixed(1)}</td><td className="action-cell"><Link className="text-link" href={`/papers/${row.id}`}>查看</Link></td></tr>)}</tbody></table></div> : <p className="empty-copy">当前课题组还没有正式提交的论文。</p>}
+    <PlaceholderPage surface={role} eyebrow={`${role === "teacher" ? "导师端" : "学生端"} / 论文`} title={role === "teacher" ? "论文档案" : "组内论文"}>
+      {rows.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>月份</th><th>学生</th><th>论文标题</th><th>版本</th><th>AI</th><th>导师</th><th /></tr></thead><tbody>{rows.map((row) => <tr key={`${row.id}-${row.month}`}><td className="mono">{row.month}</td><td>{row.student}</td><td>{row.title}</td><td className="mono">v{row.version}</td><td className="score">{row.aiScore == null ? "—" : row.aiScore.toFixed(1)}</td><td className="score">{row.teacherScore == null ? "—" : row.teacherScore.toFixed(1)}</td><td className="action-cell"><Link className="text-link" href={`/papers/${row.id}`}>查看</Link></td></tr>)}</tbody></table></div> : <p className="empty-copy">{emptyText}</p>}
     </PlaceholderPage>
   );
 }

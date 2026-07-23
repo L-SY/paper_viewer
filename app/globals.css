@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --font-geist-sans: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+  --font-geist-mono: "Cascadia Mono", Consolas, monospace;
   --bg: #ffffff;
   --sidebar: #f7f7f5;
   --surface: #f1f1ef;
@@ -382,16 +384,20 @@ h3 { margin-bottom: 4px; font-size: 12px; }
 .legal-page article section h2 { font-size: 12px; }
 .legal-page article section p { margin: 0; color: #575550; font-size: 10px; line-height: 1.8; }
 .legal-back { margin-top: 24px; }
-.group-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 42px; }
-.invite-form { max-width: 620px; padding-top: 4px; }
-.invite-form > div:first-child { display: grid; grid-template-columns: minmax(220px, 1fr) 150px; gap: 10px; margin-bottom: 12px; }
+.group-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start; }
+.group-layout > section { min-width: 0; padding-top: 16px; border-top: 1px solid var(--border); }
+.group-layout .section-heading { min-height: 24px; align-items: flex-start; }
+.invite-form { width: 100%; padding-top: 4px; }
+.invite-form > div:first-child { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(140px, .6fr); gap: 12px; margin-bottom: 14px; }
 .invite-form label { display: flex; flex-direction: column; gap: 6px; font-size: 10px; font-weight: 600; }
+.invite-form .text-input { width: 100%; }
 .invite-form select.text-input { background: white; }
 .invite-result { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 12px; }
 .invite-form > .form-message { margin-top: 10px; }
-.group-settings-form { display: flex; flex-direction: column; gap: 10px; }
-.group-settings-form label { display: grid; grid-template-columns: 1fr 132px; align-items: center; gap: 10px; color: var(--text-2); font-size: 9px; }
-.group-settings-form > div { display: flex; align-items: center; gap: 9px; padding-top: 4px; }
+.group-settings-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; padding-top: 4px; }
+.group-settings-form label { display: flex; flex-direction: column; gap: 6px; color: var(--text-2); font-size: 10px; font-weight: 600; }
+.group-settings-form .text-input { width: 100%; }
+.group-settings-form > div { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; padding-top: 2px; }
 
 @media (max-width: 1050px) {
   .cycle-current { width: 185px; }
@@ -456,6 +462,7 @@ h3 { margin-bottom: 4px; font-size: 12px; }
   .segmented button { flex: 1; }
   .metric-row strong { font-size: 19px; }
   .invite-form > div:first-child { grid-template-columns: 1fr; }
+  .group-settings-form { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
