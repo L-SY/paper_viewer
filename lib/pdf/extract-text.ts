@@ -1,5 +1,3 @@
-import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
-
 const MAX_PDF_BYTES = 30 * 1024 * 1024;
 const MAX_PAGES = 40;
 const MAX_EXTRACTED_CHARACTERS = 300_000;
@@ -28,6 +26,14 @@ export async function extractPdfPages(input: ArrayBuffer | Uint8Array) {
     throw new PdfTextExtractionError("PDF_TOO_LARGE", "PDF 超过 30 MB 上限。");
   }
 
+  const isNodeRuntime = typeof process !== "undefined" && Boolean(process.versions?.node);
+  if (!isNodeRuntime) {
+    throw new PdfTextExtractionError(
+      "PDF_EXTRACTION_RUNTIME_UNSUPPORTED",
+      "当前运行环境不支持服务端 PDF 文字提取。",
+    );
+  }
+  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const loadingTask = getDocument({ data });
 
   try {
