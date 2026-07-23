@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ReviewRadar } from "@/components/review-radar";
@@ -179,10 +178,8 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
     mentorComment = teacher?.comment || "导师尚未给出本月评语。";
   }
 
-  const homeHref = isTeacher ? "/teacher" : "/student";
   return (
     <AppShell>
-      <nav className="breadcrumb" aria-label="面包屑"><Link href={homeHref}>本月总览</Link><span>/</span><span>{studentName}</span><span>/</span><strong>论文评阅</strong></nav>
       <header className="page-header"><div><div className="eyebrow">{compactMonth} / VERSION {versionNumber}</div><h1>{paperTitle}</h1><p>{studentName} · {monthLabel}月度论文 · {submittedLabel} 提交</p></div><div className="header-actions">{pdfUrl ? <a className="button button-secondary" href={pdfUrl} download={filename}>下载原始 PDF</a> : <button className="button button-secondary" type="button" disabled>下载原始 PDF</button>}</div></header>
 
       <div className="paper-layout">

@@ -97,7 +97,7 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
     <>
       <form className="auth-form" onSubmit={handleSubmit}>
         {mode === "signup" && <label>姓名<input className="text-input" type="text" name="displayName" placeholder="在组内显示的姓名" autoComplete="name" maxLength={40} required /></label>}
-        {mode === "signup" && <fieldset className="role-choice"><legend>注册身份</legend><div><label><input type="radio" name="preferredRole" value="student" defaultChecked /><span><strong>学生</strong><small>加入导师创建的课题组</small></span></label><label><input type="radio" name="preferredRole" value="teacher" /><span><strong>导师</strong><small>创建并管理课题组</small></span></label></div><p>用于确定首次进入的工作台；组内权限仍由课题组身份决定。</p></fieldset>}
+        {mode === "signup" && <fieldset className="role-choice"><legend>注册身份</legend><div><label><input type="radio" name="preferredRole" value="student" defaultChecked /><span><strong>学生</strong></span></label><label><input type="radio" name="preferredRole" value="teacher" /><span><strong>导师</strong></span></label></div></fieldset>}
         <label>邮箱<input className="text-input" type="email" name="email" placeholder="name@example.com" autoComplete="email" required /></label>
         {mode !== "forgot" && (
           <label>
@@ -116,7 +116,6 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
         {mode === "signup" && <>已经有账号？<button type="button" onClick={() => switchMode("signin")}>登录</button></>}
         {mode === "forgot" && <button type="button" onClick={() => switchMode("signin")}>返回登录</button>}
       </div>
-      <div className="auth-note">支持 Gmail、Outlook、QQ 和学校邮箱。注册后需验证邮箱，加入课题组仍需要导师邀请。<br /><Link className="text-link" href="/">浏览演示工作台 →</Link></div>
     </>
   );
 }

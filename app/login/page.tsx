@@ -14,7 +14,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const callbackError = first(query.error);
   const initialMessage = callbackError === "verification_failed" ? "邮箱验证链接无效或已经过期，请重新发送。" : callbackError === "invalid_callback" ? "登录链接不完整，请重新操作。" : null;
   return (
-    <AuthShell eyebrow="ACCOUNT" title="进入 PaperView" description="使用一个经过验证的邮箱进入你的课题组。">
+    <AuthShell eyebrow="账号" title="进入 PaperView">
       <AuthForm initialMode={initialMode} initialInvite={first(query.invite) || ""} next={first(query.next) || "/"} initialMessage={initialMessage} />
     </AuthShell>
   );

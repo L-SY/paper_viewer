@@ -25,5 +25,5 @@ export function VerifyEmailPanel({ email, invite }: { email: string; invite: str
     setState("sent");
   }
 
-  return <div className="verification-panel"><div className="mail-mark">@</div><strong>{email || "你的邮箱"}</strong><p>点击邮件中的验证链接后，即可完善个人资料并加入课题组。邮件可能需要一两分钟到达，也请检查垃圾邮件目录。</p><button className="button button-secondary" type="button" onClick={resend} disabled={!email || state === "loading"}>{state === "loading" ? "发送中…" : state === "sent" ? "已重新发送" : "重新发送邮件"}</button>{state === "error" && <div className="form-message">{errorMessage || "暂时无法发送，请稍后再试。"}</div>}<Link className="text-link" href="/login">返回登录</Link></div>;
+  return <div className="verification-panel"><div className="mail-mark">@</div><strong>{email || "你的邮箱"}</strong><p>请检查收件箱和垃圾邮件。</p><button className="button button-secondary" type="button" onClick={resend} disabled={!email || state === "loading"}>{state === "loading" ? "发送中…" : state === "sent" ? "已重新发送" : "重新发送邮件"}</button>{state === "error" && <div className="form-message">{errorMessage || "暂时无法发送，请稍后再试。"}</div>}<Link className="text-link" href="/login">返回登录</Link></div>;
 }

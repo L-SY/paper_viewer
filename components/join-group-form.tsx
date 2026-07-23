@@ -33,7 +33,6 @@ export function JoinGroupForm({ initialInvite = "" }: { initialInvite?: string }
       <div className="form-section">
         <label className="field-label" htmlFor="join-group-invite">课题组邀请码</label>
         <input id="join-group-invite" className="text-input full-input mono" name="invite" defaultValue={initialInvite} placeholder="粘贴导师提供的邀请码" autoComplete="off" required />
-        <p className="form-help">导师可以在课题组设置中创建邀请链接。加入后才能提交月度计划和论文。</p>
       </div>
       {message && <div className="form-message" role="status">{message}</div>}
       <button className="button button-primary" type="submit" disabled={loading}>{loading ? "加入中…" : "加入课题组"}</button>

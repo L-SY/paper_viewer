@@ -22,5 +22,5 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
       role = user.user_metadata.preferred_role === "teacher" ? "teacher" : "student";
     }
   }
-  return <AuthShell eyebrow="PROFILE" title="完善个人资料" description="选择首次使用的身份；加入课题组后，实际权限由组内身份决定。"><OnboardingForm initialInvite={invite || ""} initialDisplayName={displayName} initialDiscipline={discipline} initialResearchStage={researchStage} initialRole={role} /></AuthShell>;
+  return <AuthShell eyebrow="个人资料" title="完善个人资料"><OnboardingForm initialInvite={invite || ""} initialDisplayName={displayName} initialDiscipline={discipline} initialResearchStage={researchStage} initialRole={role} /></AuthShell>;
 }

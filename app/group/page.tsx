@@ -23,7 +23,7 @@ export default async function GroupPage({ searchParams }: { searchParams: Promis
     paperTime = shortTime(session.group?.paper_deadline_time);
   }
   if (session.membership?.role === "student") {
-    return <PlaceholderPage surface="student" eyebrow="学生端 / 课题组" title={session.group?.name || "当前课题组"}><p className="empty-copy">当前身份：学生</p></PlaceholderPage>;
+    return <PlaceholderPage surface="student" eyebrow="学生端 / 课题组" title={session.group?.name || "当前课题组"}>{null}</PlaceholderPage>;
   }
   if (!groupId) {
     const preferredRole = session.user?.user_metadata.preferred_role === "teacher" ? "teacher" : "student";

@@ -25,5 +25,5 @@ export function CreateGroupForm({ initialName = "E3-121" }: { initialName?: stri
     router.refresh();
   }
 
-  return <form className="profile-form" onSubmit={submit}><div className="form-section"><label className="field-label" htmlFor="group-name">课题组名称</label><input id="group-name" className="text-input full-input" name="groupName" defaultValue={initialName} minLength={2} maxLength={80} required /><p className="form-help">创建后当前账号会成为该组导师，可以继续邀请学生和其他导师。</p></div>{message && <div className="form-message" role="status">{message}</div>}<button className="button button-primary" type="submit" disabled={loading}>{loading ? "创建中…" : "创建课题组"}</button></form>;
+  return <form className="profile-form" onSubmit={submit}><div className="form-section"><label className="field-label" htmlFor="group-name">课题组名称</label><input id="group-name" className="text-input full-input" name="groupName" defaultValue={initialName} minLength={2} maxLength={80} required /></div>{message && <div className="form-message" role="status">{message}</div>}<button className="button button-primary" type="submit" disabled={loading}>{loading ? "创建中…" : "创建课题组"}</button></form>;
 }

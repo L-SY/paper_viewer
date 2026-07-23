@@ -24,7 +24,6 @@ export function SidebarNav({ role }: { role: AppRole }) {
   const nav = role === "teacher" ? teacherNav : studentNav;
   return (
     <nav className="sidebar-nav" aria-label={`${role === "teacher" ? "导师" : "学生"}导航`}>
-      <span className="side-label">{role === "teacher" ? "导师工作台" : "学生工作台"}</span>
       {nav.map((item) => {
         const active = pathname === item.href || (item.href.startsWith(`/${role}`) && pathname.startsWith(`${item.href}/`));
         return <Link key={item.href} href={item.href} className={active ? "active" : ""}><span>{item.mark}</span>{item.label}</Link>;

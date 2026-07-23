@@ -30,11 +30,11 @@ export async function AppShell({ children, surface }: { children: ReactNode; sur
       <aside className="sidebar">
         <Link className="brand" href={homeHref} aria-label={`PaperView ${roleLabel}首页`}>
           <span className="brand-mark">P</span>
-          <span><strong>PaperView</strong><small>{roleLabel}端 · 月度科研评阅</small></span>
+          <span><strong>PaperView</strong><small>{roleLabel}端</small></span>
         </Link>
         <SidebarNav role={role} />
         <div className="sidebar-footer">
-          <div className="group-chip"><span>{groupMark}</span><div><strong>{groupName}</strong><small>当前课题组</small></div></div>
+          <div className="group-chip"><span>{groupMark}</span><div><strong>{groupName}</strong></div></div>
           <AccountFooter configured={session.configured} displayName={displayName} email={email} role={roleLabel} />
         </div>
       </aside>
