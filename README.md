@@ -63,6 +63,14 @@ npm run dev
 
 `SUPABASE_SECRET_KEY` 和所有 AI API key 只能放在服务端环境，绝不能使用 `NEXT_PUBLIC_` 前缀。代码仍兼容 Supabase 旧版 anon/service_role 密钥名。
 
+## DeepSeek API
+
+项目已包含 DeepSeek 服务端适配器、PDF 逐页文本提取、JSON 输出校验、超时与有限重试、三次成功评阅限制和运行结果留档。默认模型为 `deepseek-v4-flash`；把 `DEEPSEEK_API_KEY` 写入服务端环境后即可启用，Key 不得提交到 Git 或使用 `NEXT_PUBLIC_` 前缀。
+
+`GET /api/ai-reviews` 只返回是否完成配置和当前模型，不会返回 Key。`POST /api/ai-reviews` 接收 `submissionVersionId` 与可选的 `language`，只允许学生评阅自己的论文，导师可以评阅所在组的论文。
+
+完整配置和上线检查见 [DeepSeek API 接入说明](docs/deepseek-api-integration.md)。
+
 ## 评阅数据约定
 
 AI 对六个维度分别给出 1–10 分、理由和 PDF 页码证据：
