@@ -23,15 +23,15 @@ export default async function GroupPage({ searchParams }: { searchParams: Promis
     paperTime = shortTime(session.group?.paper_deadline_time);
   }
   if (session.membership?.role === "student") {
-    return <PlaceholderPage surface="student" eyebrow="学生端 / 课题组" title={session.group?.name || "当前课题组"}>{null}</PlaceholderPage>;
+    return <PlaceholderPage surface="student" eyebrow="课题组" title={session.group?.name || "当前课题组"}>{null}</PlaceholderPage>;
   }
   if (!groupId) {
     const preferredRole = session.user?.user_metadata.preferred_role === "teacher" ? "teacher" : "student";
-    if (preferredRole === "student") return <PlaceholderPage surface="student" eyebrow="学生端 / 设置" title="加入课题组"><div className="setup-panel"><JoinGroupForm initialInvite={initialInvite || ""} /></div></PlaceholderPage>;
-    return <PlaceholderPage surface="teacher" eyebrow="导师端 / 设置" title="创建课题组"><div className="setup-panel"><CreateGroupForm /></div></PlaceholderPage>;
+    if (preferredRole === "student") return <PlaceholderPage surface="student" eyebrow="设置" title="加入课题组"><div className="setup-panel"><JoinGroupForm initialInvite={initialInvite || ""} /></div></PlaceholderPage>;
+    return <PlaceholderPage surface="teacher" eyebrow="设置" title="创建课题组"><div className="setup-panel"><CreateGroupForm /></div></PlaceholderPage>;
   }
   return (
-    <PlaceholderPage surface="teacher" eyebrow="导师端 / 课题组" title="课题组设置">
+    <PlaceholderPage surface="teacher" eyebrow="课题组" title="课题组设置">
       <div className="group-layout">
         <section>
           <div className="section-heading"><h2>邀请成员</h2></div>

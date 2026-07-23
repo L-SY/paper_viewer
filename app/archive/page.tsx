@@ -69,7 +69,7 @@ export default async function ArchivePage() {
   const emptyText = session.configured && !session.membership ? "尚未加入课题组。" : "暂无论文。";
 
   return (
-    <PlaceholderPage surface={role} eyebrow={`${role === "teacher" ? "导师端" : "学生端"} / 论文`} title={role === "teacher" ? "论文档案" : "组内论文"}>
+    <PlaceholderPage surface={role} eyebrow="论文" title={role === "teacher" ? "论文档案" : "组内论文"}>
       {rows.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>月份</th><th>学生</th><th>论文标题</th><th>版本</th><th>AI</th><th>导师</th><th /></tr></thead><tbody>{rows.map((row) => <tr key={`${row.id}-${row.month}`}><td className="mono">{row.month}</td><td>{row.student}</td><td>{row.title}</td><td className="mono">v{row.version}</td><td className="score">{row.aiScore == null ? "—" : row.aiScore.toFixed(1)}</td><td className="score">{row.teacherScore == null ? "—" : row.teacherScore.toFixed(1)}</td><td className="action-cell"><Link className="text-link" href={`/papers/${row.id}`}>查看</Link></td></tr>)}</tbody></table></div> : <p className="empty-copy">{emptyText}</p>}
     </PlaceholderPage>
   );

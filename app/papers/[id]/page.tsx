@@ -5,6 +5,7 @@ import { ReviewRadar } from "@/components/review-radar";
 import { ReviewDimensionDetails, type ReviewConfidence, type ReviewDimensionDetail, type ReviewEvidence } from "@/components/review-dimension-details";
 import { reviewDimensions } from "@/lib/review-dimensions";
 import { TeacherReviewForm } from "@/components/teacher-review-form";
+import { PdfReader } from "@/components/pdf-reader";
 import { getCurrentMembership } from "@/lib/auth/current-membership";
 
 export const metadata: Metadata = { title: "论文评阅" };
@@ -183,7 +184,7 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
       <header className="page-header"><div><div className="eyebrow">{compactMonth} / VERSION {versionNumber}</div><h1>{paperTitle}</h1><p>{studentName} · {monthLabel}月度论文 · {submittedLabel} 提交</p></div><div className="header-actions">{pdfUrl ? <a className="button button-secondary" href={pdfUrl} download={filename}>下载原始 PDF</a> : <button className="button button-secondary" type="button" disabled>下载原始 PDF</button>}</div></header>
 
       <div className="paper-layout">
-        <section className="paper-panel" aria-label="PDF 在线预览"><div className="panel-toolbar"><div><strong>{filename}</strong><span>{pageCount} pages · {sizeMb} MB</span></div>{pdfUrl && <a className="text-link" href={pdfUrl} target="_blank" rel="noreferrer">新窗口打开</a>}</div><div className="pdf-stage">{pdfUrl ? <iframe className="pdf-embed" src={`${pdfUrl}#toolbar=1&navpanes=0`} title={`${paperTitle} PDF 预览`} /> : <article className="pdf-page"><h2>{paperTitle}</h2><div className="authors">Yuhang Chen · E3 Laboratory</div><h3>Abstract</h3><p>针对轮腿机器人在非结构化地形中接触状态难以稳定估计的问题，本月工作构建了一套基于足端运动残差与电机电流信息的轻量估计流程，并在仿真环境中完成初步消融验证。</p><h3>I. Introduction</h3><p>本月研究的目标不是提出完整的新算法，而是回答一个更小的问题：组合运动学残差和电机电流能否降低单一阈值的误检率？</p><div className="figure-placeholder">Fig. 1. Contact estimation pipeline and experimental setup</div><h3>II. Method</h3><p>方法包含时间对齐、特征归一化、候选接触窗口检测与置信度融合四个步骤。</p><h3>III. Preliminary Results</h3><p>融合方法降低了高速步态下的误检，但慢速软地面场景没有稳定改善。</p></article>}</div></section>
+        <section className="paper-panel" aria-label="PDF 在线预览">{pdfUrl ? <PdfReader url={pdfUrl} filename={filename} pageCount={pageCount} sizeLabel={`${sizeMb} MB`} /> : <><div className="panel-toolbar"><div><strong>{filename}</strong><span>{pageCount} 页 · {sizeMb} MB</span></div></div><div className="pdf-stage"><article className="pdf-page"><h2>{paperTitle}</h2><div className="authors">Yuhang Chen · E3 Laboratory</div><h3>Abstract</h3><p>针对轮腿机器人在非结构化地形中接触状态难以稳定估计的问题，本月工作构建了一套基于足端运动残差与电机电流信息的轻量估计流程，并在仿真环境中完成初步消融验证。</p><h3>I. Introduction</h3><p>本月研究的目标不是提出完整的新算法，而是回答一个更小的问题：组合运动学残差和电机电流能否降低单一阈值的误检率？</p><div className="figure-placeholder">Fig. 1. Contact estimation pipeline and experimental setup</div><h3>II. Method</h3><p>方法包含时间对齐、特征归一化、候选接触窗口检测与置信度融合四个步骤。</p><h3>III. Preliminary Results</h3><p>融合方法降低了高速步态下的误检，但慢速软地面场景没有稳定改善。</p></article></div></>}</section>
 
         <section className="review-panel" aria-label="评阅详情">
           <div className="review-header">

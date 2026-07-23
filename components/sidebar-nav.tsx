@@ -15,6 +15,7 @@ const teacherNav = [
 const studentNav = [
   { href: "/student", label: "我的本月", mark: "月" },
   { href: "/submit", label: "计划与论文", mark: "稿" },
+  { href: "/my-paper", label: "本月论文", mark: "阅" },
   { href: "/archive", label: "组内论文", mark: "档" },
   { href: "/trends", label: "我的趋势", mark: "趋" },
 ];
