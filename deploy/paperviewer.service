@@ -8,6 +8,7 @@ Type=simple
 User=paperviewer
 Group=paperviewer
 WorkingDirectory=/opt/paperviewer/current
+EnvironmentFile=/opt/paperviewer/current/.env.local
 Environment=NODE_ENV=production
 Environment=NEXT_TELEMETRY_DISABLED=1
 ExecStart=/usr/bin/npm run start:ecs

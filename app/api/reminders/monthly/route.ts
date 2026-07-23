@@ -3,6 +3,7 @@ import { monthlyReminderEmail } from "@/lib/email/templates";
 import { sendTransactionalEmail } from "@/lib/email/resend";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getMonthContext, shortTime } from "@/lib/monthly-time";
+import { getRequestOrigin } from "@/lib/http/request-origin";
 
 type Member = { group_id: string; user_id: string };
 type Group = { id: string; name: string; timezone: string; plan_deadline_day: number; plan_deadline_time: string; paper_deadline_rule: string; paper_deadline_day: number | null; paper_deadline_time: string };
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
   const records = new Map(((recordData || []) as (RecordRow & { research_month: string })[]).map((record) => [`${record.group_id}:${record.student_id}:${record.research_month}`, record]));
   const profiles = new Map(((profileData || []) as Profile[]).map((profile) => [profile.id, profile.display_name]));
   const emails = new Map(usersResult.data.users.map((user) => [user.id, user.email || ""]));
-  const appUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+  const appUrl = getRequestOrigin(request);
   const deliveries: Array<{ userId: string; kind: "plan" | "paper"; sent: boolean }> = [];
 
   for (const member of members) {

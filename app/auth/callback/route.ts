@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { getRequestOrigin } from "@/lib/http/request-origin";
 
 function safePath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
@@ -7,15 +8,16 @@ function safePath(value: string | null) {
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
+  const requestOrigin = getRequestOrigin(request);
   const code = requestUrl.searchParams.get("code");
-  const target = new URL(safePath(requestUrl.searchParams.get("next")), request.url);
+  const target = new URL(safePath(requestUrl.searchParams.get("next")), requestOrigin);
   const invite = requestUrl.searchParams.get("invite");
   if (invite) target.searchParams.set("invite", invite);
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !publishableKey || !code) {
-    return NextResponse.redirect(new URL("/login?error=invalid_callback", request.url));
+    return NextResponse.redirect(new URL("/login?error=invalid_callback", requestOrigin));
   }
 
   const response = NextResponse.redirect(target);
@@ -26,6 +28,6 @@ export async function GET(request: NextRequest) {
     },
   });
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) return NextResponse.redirect(new URL("/login?error=verification_failed", request.url));
+  if (error) return NextResponse.redirect(new URL("/login?error=verification_failed", requestOrigin));
   return response;
 }

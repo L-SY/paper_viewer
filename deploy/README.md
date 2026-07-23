@@ -32,7 +32,8 @@ chmod 700 /tmp/update-runtime.sh
 
 The update script installs dependencies, builds the production bundle, removes
 development dependencies, checks the production dependency audit, and restarts
-the service.
+the service. It installs the base Nginx site only when the site does not already
+exist, so a later application update does not overwrite Certbot's HTTPS changes.
 
 SSH password login is disabled. Keep the private key backed up securely and do
 not place it in this repository.

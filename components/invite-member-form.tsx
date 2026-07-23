@@ -18,7 +18,14 @@ export function InviteMemberForm({ groupId }: { groupId: string | null }) {
     setLoading(false);
     if (!response.ok || !result.inviteUrl) return setMessage(result.error || "邀请码创建失败。");
     setInviteUrl(result.inviteUrl);
-    setMessage(result.emailSent ? "邀请链接已创建并发送邮件。" : result.emailStatus === "not_requested" ? "邀请链接已创建。" : "邀请链接已创建，但邮件服务尚未配置。" );
+    setMessage(result.emailSent
+      ? "邀请链接已创建并发送邮件。"
+      : result.emailStatus === "not_requested"
+        ? "邀请链接已创建。"
+        : result.emailStatus === "provider_error"
+          ? "邀请链接已创建，但邮件服务发送失败，请稍后重试。"
+          : "邀请链接已创建，但邮件服务尚未配置。"
+    );
   }
 
   async function copyInvite() { if (inviteUrl) { await navigator.clipboard.writeText(inviteUrl); setMessage("邀请链接已复制。"); } }

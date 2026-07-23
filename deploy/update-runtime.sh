@@ -2,7 +2,9 @@
 set -euo pipefail
 
 install -m 644 /tmp/paperviewer.service /etc/systemd/system/paperviewer.service
-install -m 644 /tmp/paperviewer.nginx /etc/nginx/sites-available/paperviewer
+if [[ ! -e /etc/nginx/sites-available/paperviewer ]]; then
+  install -m 644 /tmp/paperviewer.nginx /etc/nginx/sites-available/paperviewer
+fi
 ln -sfn /etc/nginx/sites-available/paperviewer /etc/nginx/sites-enabled/paperviewer
 
 install -o paperviewer -g paperviewer -m 644 /tmp/paperviewer.package.json /opt/paperviewer/current/package.json

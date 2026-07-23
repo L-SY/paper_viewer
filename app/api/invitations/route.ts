@@ -4,6 +4,7 @@ import { invitationEmail } from "@/lib/email/templates";
 import { sendTransactionalEmail } from "@/lib/email/resend";
 import { getCurrentMembership } from "@/lib/auth/current-membership";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getRequestOrigin } from "@/lib/http/request-origin";
 
 const schema = z.object({ groupId: z.string().uuid(), email: z.string().email().nullable(), role: z.enum(["teacher", "student"]) });
 
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
 
   const { data: token, error } = await session.supabase.rpc("create_group_invitation", { target_group_id: parsed.data.groupId, invited_email: parsed.data.email, member_role: parsed.data.role, expires_in_hours: 168 });
   if (error || typeof token !== "string") return NextResponse.json({ error: error?.message || "邀请码创建失败。" }, { status: 400 });
-  const inviteUrl = new URL("/login", request.url);
+  const inviteUrl = new URL("/login", getRequestOrigin(request));
   inviteUrl.searchParams.set("mode", "signup");
   inviteUrl.searchParams.set("invite", token);
 
