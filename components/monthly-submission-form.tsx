@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-type VersionItem = { version_number: number; original_filename: string; size_bytes: number; page_count: number; submitted_at: string };
+type VersionItem = { id: string; version_number: number; original_filename: string; size_bytes: number; page_count: number; submitted_at: string };
 
 function firstDayOfCurrentMonth() {
   const now = new Date();
@@ -15,6 +17,7 @@ function bytesToMb(value: number) {
 }
 
 export function MonthlySubmissionForm({ initialPlan, initialTitle, initialVersions, demo }: { initialPlan: string; initialTitle: string; initialVersions: VersionItem[]; demo: boolean }) {
+  const router = useRouter();
   const [fileName, setFileName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; success?: boolean } | null>(null);
@@ -89,11 +92,12 @@ export function MonthlySubmissionForm({ initialPlan, initialTitle, initialVersio
     const fileInput = form.elements.namedItem("paper") as HTMLInputElement | null;
     if (fileInput) fileInput.value = "";
     setFileName(null);
+    router.refresh();
   }
 
   return (
     <form onSubmit={submit}>
-      <div className="form-layout"><div><section className="form-section"><label className="field-label" htmlFor="paper-title">论文标题</label><input id="paper-title" className="text-input full-input" name="title" defaultValue={initialTitle} placeholder="与 PDF 中的标题一致" /></section><section className="form-section"><label className="field-label" htmlFor="plan">月初计划</label><textarea id="plan" className="text-area" name="plan" defaultValue={initialPlan} placeholder="本月目标" /></section><section className="form-section"><div className="field-label"><span>论文 PDF</span><small>30 MB · 40 页以内</small></div><label className="upload-zone" htmlFor="paper-upload"><input id="paper-upload" name="paper" type="file" accept="application/pdf" onChange={(event) => setFileName(event.target.files?.[0]?.name || null)} /><span className="upload-icon">PDF</span><strong>{fileName || "拖入文件或点击选择"}</strong></label></section>{message && <div className={`form-message submission-message${message.success ? " success" : ""}`} role="status">{message.text}</div>}<div className="submission-actions"><button className="button button-primary" type="submit" disabled={loading}>{loading ? "保存中…" : "保存本月记录"}</button>{demo && <span>当前为演示模式</span>}</div></div><aside><section className="aside-card"><h3>历史版本</h3><ol className="version-list">{initialVersions.length ? initialVersions.map((version) => <li key={version.version_number}><span>v{version.version_number}</span><div><strong>{version.original_filename}</strong><small>{bytesToMb(version.size_bytes)} · {version.page_count}页</small></div></li>) : <li><span>—</span><div><strong>暂无版本</strong></div></li>}</ol></section></aside></div>
+      <div className="form-layout"><div><section className="form-section"><label className="field-label" htmlFor="paper-title">论文标题</label><input id="paper-title" className="text-input full-input" name="title" defaultValue={initialTitle} placeholder="与 PDF 中的标题一致" /></section><section className="form-section"><label className="field-label" htmlFor="plan">月初计划</label><textarea id="plan" className="text-area" name="plan" defaultValue={initialPlan} placeholder="本月目标" /></section><section className="form-section"><div className="field-label"><span>论文 PDF</span><small>30 MB · 40 页以内</small></div><label className="upload-zone" htmlFor="paper-upload"><input id="paper-upload" name="paper" type="file" accept="application/pdf" onChange={(event) => setFileName(event.target.files?.[0]?.name || null)} /><span className="upload-icon">PDF</span><strong>{fileName || "拖入文件或点击选择"}</strong></label></section>{message && <div className={`form-message submission-message${message.success ? " success" : ""}`} role="status">{message.text}</div>}<div className="submission-actions"><button className="button button-primary" type="submit" disabled={loading}>{loading ? "保存中…" : "保存本月记录"}</button>{demo && <span>当前为演示模式</span>}</div></div><aside><section className="aside-card"><h3>历史版本</h3><ol className="version-list">{initialVersions.length ? initialVersions.map((version) => <li key={version.id}><span>v{version.version_number}</span><div><strong>{version.original_filename}</strong><small>{bytesToMb(version.size_bytes)} · {version.page_count}页</small></div><Link className="text-link" href={`/papers/${version.id}`}>查看</Link></li>) : <li><span>—</span><div><strong>暂无版本</strong></div></li>}</ol></section></aside></div>
     </form>
   );
 }

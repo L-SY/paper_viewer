@@ -1,15 +1,31 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { AiReviewAction } from "@/components/ai-review-action";
 import { ReviewRadar } from "@/components/review-radar";
 import { ReviewDimensionDetails, type ReviewConfidence, type ReviewDimensionDetail, type ReviewEvidence } from "@/components/review-dimension-details";
-import { reviewDimensions } from "@/lib/review-dimensions";
+import { qualitativeReviewDimensions, reviewDimensions } from "@/lib/review-dimensions";
 import { TeacherReviewForm } from "@/components/teacher-review-form";
 import { PdfReader } from "@/components/pdf-reader";
 import { getCurrentMembership } from "@/lib/auth/current-membership";
 
 export const metadata: Metadata = { title: "论文评阅" };
 type ReviewDimension = ReviewDimensionDetail & { resultKey: string };
+type ReviewRunStatus = "queued" | "running" | "completed" | "failed";
+
+const qualitativeLevelLabels: Record<string, string> = {
+  needs_clarification: "需要补充",
+  basically_clear: "基本清楚",
+  clear_and_sufficient: "清楚充分",
+  deep_and_complete: "深入完整",
+  not_assessable: "无法评价",
+};
+
+function asRecord(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
 
 function asTextList(value: unknown) {
   if (!Array.isArray(value)) return [];
@@ -31,8 +47,9 @@ function asEvidenceList(value: unknown): ReviewEvidence[] {
     const candidate = item as Record<string, unknown>;
     const page = Number(candidate.page);
     const observation = typeof candidate.observation === "string" ? candidate.observation : "";
+    const quote = typeof candidate.quote === "string" ? candidate.quote : undefined;
     const kind = candidate.kind === "inference" ? "inference" : candidate.kind === "fact" ? "fact" : null;
-    return Number.isInteger(page) && page > 0 && observation && kind ? [{ page, observation, kind }] : [];
+    return Number.isInteger(page) && page > 0 && observation && kind ? [{ page, quote, observation, kind }] : [];
   });
 }
 
@@ -40,7 +57,7 @@ function asConfidence(value: unknown): ReviewConfidence {
   return value === "high" || value === "medium" || value === "low" ? value : null;
 }
 
-const demoDimensionDetails: Record<string, Omit<ReviewDimensionDetail, "key" | "short" | "name" | "score">> = {
+const demoDimensionDetails: Record<string, Omit<ReviewDimensionDetail, "key" | "short" | "name" | "score" | "scale" | "maxScore" | "levelLabel">> = {
   goal: {
     explanation: "研究问题收敛到组合运动残差和电机电流能否降低误检率，并说明本月只验证这一较小问题，符合 8–10 分锚点。",
     strengths: ["本月目标与长期算法研究进行了区分。"],
@@ -114,13 +131,31 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
   let promptVersion = "v0.2.0";
   let rubricVersion = "v1.1.0";
   let attempt = 2;
-  let dimensions: ReviewDimension[] = reviewDimensions.map((dimension) => ({ ...dimension, ...demoDimensionDetails[dimension.key] }));
+  let completedCount = 2;
+  let activeStatus: ReviewRunStatus | null = null;
+  let lastError: string | null = null;
+  let reviewMode: "numeric" | "qualitative" = "numeric";
+  let dimensions: ReviewDimension[] = reviewDimensions.map((dimension) => ({
+    ...dimension,
+    ...demoDimensionDetails[dimension.key],
+    scale: "numeric",
+    maxScore: 10,
+  }));
   let strengths = [
     "研究问题收敛到可在一个月内验证的小问题，目标、基线和判断标准基本对应。",
     "如实报告软地面场景未获得稳定改善，并提出可能的摩擦模型影响，没有把局部结果过度包装成成功。",
   ];
   let improvements = ["目前只报告汇总误检率，缺少每个场景的样本量、方差或置信区间。建议下月优先补齐逐场景统计，并明确软地面实验中摩擦参数的设置范围。"];
   let uncertaintyNotes = ["当前演示只展示论文节选，因此表达与学术规范维度的信息充分程度较低。"];
+  let reviewSummary = "";
+  let progressSummary: {
+    documentedWork: string[];
+    completedOrAdvanced: string[];
+    blockedChangedOrInconclusive: string[];
+    planAlignment: string;
+  } | null = null;
+  let workBlocks: Array<{ title: string; summary: string; outcome: string }> = [];
+  let rawReview: Record<string, unknown> | null = null;
   let mentorScore: number | null = 8.5;
   let mentorComment = "这个月的问题拆得比较合适，也敢于保留没有改善的结果。下个月先不要急着扩展网络结构，把软地面下的误差来源拆清楚；建议补一个真实平台上的小规模对照。";
 
@@ -131,11 +166,19 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
     if (!version) notFound();
     const { data: record } = await session.supabase.from("monthly_records").select("student_id, research_month").eq("id", version.monthly_record_id).maybeSingle();
     if (!record) notFound();
-    const [{ data: profile }, { data: ai }, { data: teacher }, signed] = await Promise.all([
+    const { data: monthlyVersions } = await session.supabase
+      .from("submission_versions")
+      .select("id")
+      .eq("monthly_record_id", version.monthly_record_id);
+    const monthlyVersionIds = (monthlyVersions || []).map((item) => item.id);
+    const [{ data: profile }, { data: ai }, { data: teacher }, signed, { data: runs }] = await Promise.all([
       session.supabase.from("profiles").select("display_name").eq("id", record.student_id).maybeSingle(),
-      session.supabase.from("ai_reviews").select("attempt_number, provider, model, prompt_version, rubric_version, dimension_scores, total_score, strengths, weaknesses, suggestions, uncertainty_notes").eq("submission_version_id", id).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
+      session.supabase.from("ai_reviews").select("attempt_number, provider, model, prompt_version, rubric_version, dimension_scores, total_score, strengths, weaknesses, suggestions, evidence, uncertainty_notes, raw_output").eq("submission_version_id", id).eq("status", "completed").order("completed_at", { ascending: false }).limit(1).maybeSingle(),
       session.supabase.from("teacher_reviews").select("score, comment").eq("submission_version_id", id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
       session.supabase.storage.from("monthly-papers").createSignedUrl(version.storage_path, 3600),
+      monthlyVersionIds.length
+        ? session.supabase.from("ai_reviews").select("status, error_message, created_at").in("submission_version_id", monthlyVersionIds).order("created_at", { ascending: false })
+        : Promise.resolve({ data: [] }),
     ]);
     const researchDate = new Date(`${record.research_month}T00:00:00Z`);
     const year = researchDate.getUTCFullYear();
@@ -156,25 +199,75 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
     promptVersion = ai?.prompt_version || "—";
     rubricVersion = ai?.rubric_version || "—";
     attempt = ai?.attempt_number || 0;
+    const runRows = (runs || []) as Array<{ status: ReviewRunStatus; error_message: string | null }>;
+    completedCount = runRows.filter((run) => run.status === "completed").length;
+    activeStatus = runRows.find((run) => run.status === "queued" || run.status === "running")?.status || null;
+    lastError = runRows.find((run) => run.status === "failed")?.error_message || null;
     const dimensionSource = ai?.dimension_scores && typeof ai.dimension_scores === "object" ? ai.dimension_scores as Record<string, unknown> : {};
-    dimensions = reviewDimensions.map((dimension) => {
-      const raw = dimensionSource[dimension.resultKey] ?? dimensionSource[dimension.key];
-      const detail = raw && typeof raw === "object" ? raw as Record<string, unknown> : null;
-      const value = typeof raw === "number" ? raw : detail ? Number(detail.score) : 0;
-      return {
-        ...dimension,
-        score: Number.isFinite(value) ? value : 0,
-        explanation: detail && typeof detail.explanation === "string" ? detail.explanation : "",
-        strengths: asTextList(detail?.strengths).slice(0, 2),
-        gaps: asTextList(detail?.gaps).slice(0, 2),
-        evidence: asEvidenceList(detail?.evidence).slice(0, 4),
-        nextAction: detail && typeof detail.next_action === "string" ? detail.next_action : "",
-        confidence: asConfidence(detail?.confidence),
-      };
-    });
+    reviewMode = asRecord(dimensionSource.problem_goal)?.display_level ? "qualitative" : "numeric";
+    dimensions = reviewMode === "qualitative"
+      ? qualitativeReviewDimensions.map((dimension) => {
+        const detail = asRecord(dimensionSource[dimension.resultKey]);
+        const value = Number(detail?.level_code);
+        const displayLevel = typeof detail?.display_level === "string" ? detail.display_level : "not_assessable";
+        return {
+          ...dimension,
+          score: Number.isFinite(value) ? value : 0,
+          scale: "qualitative" as const,
+          maxScore: 4,
+          levelLabel: qualitativeLevelLabels[displayLevel] || "无法评价",
+          explanation: typeof detail?.dimension_summary === "string" ? detail.dimension_summary : "",
+          strengths: asTextList(detail?.what_is_clear).slice(0, 2),
+          gaps: asTextList(detail?.what_needs_clarification).slice(0, 2),
+          evidence: asEvidenceList(detail?.evidence).slice(0, 4),
+          nextAction: typeof detail?.actionable_suggestion === "string" ? detail.actionable_suggestion : "",
+          confidence: asConfidence(detail?.confidence),
+        };
+      })
+      : reviewDimensions.map((dimension) => {
+        const raw = dimensionSource[dimension.resultKey] ?? dimensionSource[dimension.key];
+        const detail = asRecord(raw);
+        const value = typeof raw === "number" ? raw : Number(detail?.score);
+        return {
+          ...dimension,
+          score: Number.isFinite(value) ? value : 0,
+          scale: "numeric" as const,
+          maxScore: 10,
+          explanation: typeof detail?.explanation === "string" ? detail.explanation : "",
+          strengths: asTextList(detail?.strengths).slice(0, 2),
+          gaps: asTextList(detail?.gaps).slice(0, 2),
+          evidence: asEvidenceList(detail?.evidence).slice(0, 4),
+          nextAction: typeof detail?.next_action === "string" ? detail.next_action : "",
+          confidence: asConfidence(detail?.confidence),
+        };
+      });
     strengths = asTextList(ai?.strengths);
     improvements = [...asTextList(ai?.weaknesses), ...asTextList(ai?.suggestions)];
     uncertaintyNotes = asTextList(ai?.uncertainty_notes);
+    const rawOutput = asRecord(ai?.raw_output);
+    rawReview = asRecord(rawOutput?.review);
+    const overallFeedback = asRecord(rawReview?.overall_feedback);
+    reviewSummary = typeof overallFeedback?.summary === "string" ? overallFeedback.summary : "";
+    const progress = asRecord(rawReview?.progress_summary);
+    if (progress) {
+      progressSummary = {
+        documentedWork: asTextList(progress.documented_work),
+        completedOrAdvanced: asTextList(progress.completed_or_advanced),
+        blockedChangedOrInconclusive: asTextList(progress.blocked_changed_or_inconclusive),
+        planAlignment: typeof progress.plan_alignment_summary === "string" ? progress.plan_alignment_summary : "",
+      };
+    }
+    workBlocks = Array.isArray(rawReview?.work_blocks)
+      ? rawReview.work_blocks.flatMap((item) => {
+        const block = asRecord(item);
+        if (!block) return [];
+        return [{
+          title: typeof block.title === "string" ? block.title : "未命名工作",
+          summary: typeof block.summary === "string" ? block.summary : "",
+          outcome: typeof block.outcome_state === "string" ? block.outcome_state : "unclear",
+        }];
+      })
+      : [];
     mentorScore = teacher?.score == null ? null : Number(teacher.score);
     mentorComment = teacher?.comment || "导师尚未给出本月评语。";
   }
@@ -188,16 +281,42 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
 
         <section className="review-panel" aria-label="评阅详情">
           <div className="review-header">
-            <div className="review-header-top"><div><h2>AI 六维评阅</h2><p>7 分表示合格且清楚；本项信息充分程度不参与总分。</p></div><div className="review-total"><strong>{aiTotal == null ? "—" : aiTotal.toFixed(1)}</strong><small>六维平均 / 10</small></div></div>
+            <div className="review-header-top">
+              <div>
+                <h2>AI 六维评阅</h2>
+                <p>{reviewMode === "qualitative" ? "六个维度独立形成研究思维画像，不计算总分。" : "7 分表示合格且清楚；信息充分程度不参与总分。"}</p>
+              </div>
+              <div className={`review-total ${reviewMode}`}>
+                <strong>{reviewMode === "qualitative" ? (attempt ? "已评阅" : "—") : aiTotal == null ? "—" : aiTotal.toFixed(1)}</strong>
+                <small>{reviewMode === "qualitative" ? "质性画像" : "六维平均 / 10"}</small>
+              </div>
+            </div>
             <div className="review-meta"><span>PROVIDER: {provider}</span><span>MODEL: {model}</span><span>PROMPT: {promptVersion}</span><span>RUBRIC: {rubricVersion}</span><span>RUN: {attempt || 0}/3</span></div>
+            <AiReviewAction
+              submissionVersionId={submissionVersionId}
+              completedCount={completedCount}
+              activeStatus={activeStatus}
+              lastError={lastError}
+              configured={Boolean(process.env.DEEPSEEK_API_KEY?.trim())}
+            />
           </div>
-          <div className="review-tabs"><span className="active">综合评阅</span><span>证据记录</span><span>原始输出</span></div>
           <div className="review-body">
-            <div className="radar-and-scores"><div className="radar-wrap"><ReviewRadar dimensions={dimensions} /></div><div className="score-list">{dimensions.map((dimension) => <div className="dimension-row" key={dimension.key}><label>{dimension.name}</label><strong>{dimension.score ? dimension.score.toFixed(Number.isInteger(dimension.score) ? 0 : 1) : "—"}</strong><div><span style={{ width: `${dimension.score * 10}%` }} /></div></div>)}</div></div>
+            {reviewSummary && <p className="review-summary">{reviewSummary}</p>}
+            {progressSummary && (
+              <div className="review-progress">
+                <div><span>记录的工作</span><p>{progressSummary.documentedWork.join("；") || "文中未说明"}</p></div>
+                <div><span>推进或完成</span><p>{progressSummary.completedOrAdvanced.join("；") || "文中未说明"}</p></div>
+                <div><span>受阻、变化或待判断</span><p>{progressSummary.blockedChangedOrInconclusive.join("；") || "无单独记录"}</p></div>
+                <div><span>与月初计划</span><p>{progressSummary.planAlignment || "未提供月初计划或文中未说明"}</p></div>
+              </div>
+            )}
+            <div className="radar-and-scores"><div className="radar-wrap"><ReviewRadar dimensions={dimensions} maxScore={reviewMode === "qualitative" ? 4 : 10} /></div><div className="score-list">{dimensions.map((dimension) => <div className="dimension-row" key={dimension.key}><label>{dimension.name}</label><strong>{dimension.scale === "qualitative" ? dimension.levelLabel : dimension.score ? dimension.score.toFixed(Number.isInteger(dimension.score) ? 0 : 1) : "—"}</strong><div><span style={{ width: `${Math.max(0, Math.min(100, dimension.score / dimension.maxScore * 100))}%` }} /></div></div>)}</div></div>
             <ReviewDimensionDetails dimensions={dimensions} />
             <div className="review-block"><h3><span />做得好的地方</h3>{strengths.length ? <ul>{strengths.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul> : <p className="empty-copy">AI 评阅尚未生成。</p>}</div>
             <div className="review-block warning"><h3><span />主要不足与下一步</h3>{improvements.length ? improvements.map((item, index) => <p key={`${index}-${item}`}>{item}</p>) : <p className="empty-copy">AI 评阅尚未生成。</p>}</div>
             {uncertaintyNotes.length > 0 && <div className="review-block uncertainty"><h3><span />信息限制</h3>{uncertaintyNotes.map((item, index) => <p key={`${index}-${item}`}>{item}</p>)}</div>}
+            {workBlocks.length > 0 && <details className="review-details"><summary>查看工作区块</summary>{workBlocks.map((block, index) => <div key={`${block.title}-${index}`}><strong>{block.title}</strong><span>{block.outcome}</span><p>{block.summary}</p></div>)}</details>}
+            {rawReview && <details className="review-details raw-review"><summary>查看原始 AI 结果</summary><pre>{JSON.stringify(rawReview, null, 2)}</pre></details>}
             {isTeacher ? <TeacherReviewForm submissionVersionId={submissionVersionId} initialScore={mentorScore ?? 8.5} initialComment={mentorScore == null ? "" : mentorComment} /> : <div className="mentor-box"><header><strong>导师评分与评语</strong><span>{mentorScore == null ? "待评语" : `${mentorScore.toFixed(1)} / 10`}</span></header><p>{mentorComment}</p></div>}
           </div>
         </section>

@@ -12,6 +12,7 @@ type ArchiveRow = {
   title: string;
   version: number;
   aiScore: number | null;
+  aiReviewed?: boolean;
   teacherScore: number | null;
 };
 
@@ -44,8 +45,8 @@ export default async function ArchivePage() {
     ]);
     const profileMap = new Map((profiles || []).map((profile) => [profile.id, profile.display_name]));
     const versionMap = new Map((versions || []).map((version) => [version.id, version]));
-    const aiMap = new Map<string, number>();
-    for (const review of aiReviews || []) if (review.total_score != null && !aiMap.has(review.submission_version_id)) aiMap.set(review.submission_version_id, Number(review.total_score));
+    const aiMap = new Map<string, number | null>();
+    for (const review of aiReviews || []) if (!aiMap.has(review.submission_version_id)) aiMap.set(review.submission_version_id, review.total_score == null ? null : Number(review.total_score));
     const teacherScores = new Map<string, number[]>();
     for (const review of teacherReviews || []) teacherScores.set(review.submission_version_id, [...(teacherScores.get(review.submission_version_id) || []), Number(review.score)]);
 
@@ -61,6 +62,7 @@ export default async function ArchivePage() {
         title: version.title,
         version: version.version_number,
         aiScore: aiMap.get(record.official_version_id) ?? null,
+        aiReviewed: aiMap.has(record.official_version_id),
         teacherScore: scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : null,
       }];
     });
@@ -70,7 +72,7 @@ export default async function ArchivePage() {
 
   return (
     <PlaceholderPage surface={role} eyebrow="论文" title={role === "teacher" ? "论文档案" : "组内论文"}>
-      {rows.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>月份</th><th>学生</th><th>论文标题</th><th>版本</th><th>AI</th><th>导师</th><th /></tr></thead><tbody>{rows.map((row) => <tr key={`${row.id}-${row.month}`}><td className="mono">{row.month}</td><td>{row.student}</td><td>{row.title}</td><td className="mono">v{row.version}</td><td className="score">{row.aiScore == null ? "—" : row.aiScore.toFixed(1)}</td><td className="score">{row.teacherScore == null ? "—" : row.teacherScore.toFixed(1)}</td><td className="action-cell"><Link className="text-link" href={`/papers/${row.id}`}>查看</Link></td></tr>)}</tbody></table></div> : <p className="empty-copy">{emptyText}</p>}
+      {rows.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>月份</th><th>学生</th><th>论文标题</th><th>版本</th><th>AI</th><th>导师</th><th /></tr></thead><tbody>{rows.map((row) => <tr key={`${row.id}-${row.month}`}><td className="mono">{row.month}</td><td>{row.student}</td><td>{row.title}</td><td className="mono">v{row.version}</td><td className="score">{row.aiScore == null ? row.aiReviewed ? "已评阅" : "—" : row.aiScore.toFixed(1)}</td><td className="score">{row.teacherScore == null ? "—" : row.teacherScore.toFixed(1)}</td><td className="action-cell"><Link className="text-link" href={`/papers/${row.id}`}>查看</Link></td></tr>)}</tbody></table></div> : <p className="empty-copy">{emptyText}</p>}
     </PlaceholderPage>
   );
 }

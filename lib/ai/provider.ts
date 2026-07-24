@@ -14,7 +14,7 @@ export type ReviewResponse = {
 };
 
 /**
- * Provider adapters keep model-specific API calls outside the scoring rules.
+ * Provider adapters keep model-specific API calls outside the review rules.
  * This lets experiments run the exact same versioned prompt across providers.
  */
 export interface AiReviewProvider {

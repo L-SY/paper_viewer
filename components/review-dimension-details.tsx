@@ -2,6 +2,7 @@ export type ReviewConfidence = "high" | "medium" | "low" | null;
 
 export type ReviewEvidence = {
   page: number;
+  quote?: string;
   observation: string;
   kind: "fact" | "inference";
 };
@@ -11,6 +12,9 @@ export type ReviewDimensionDetail = {
   short: string;
   name: string;
   score: number;
+  scale: "numeric" | "qualitative";
+  maxScore: number;
+  levelLabel?: string;
   explanation: string;
   strengths: string[];
   gaps: string[];
@@ -36,7 +40,14 @@ export function ReviewDimensionDetails({ dimensions }: { dimensions: ReviewDimen
               <div><span className="dimension-index">{dimension.short}</span><strong>{dimension.name}</strong></div>
               <div className="dimension-detail-meta">
                 <span className={`confidence-badge ${dimension.confidence || "missing"}`}>本项信息充分程度 {dimension.confidence ? confidenceLabels[dimension.confidence] : "未记录"}</span>
-                <strong>{dimension.score ? dimension.score.toFixed(Number.isInteger(dimension.score) ? 0 : 1) : "—"}<small> / 10</small></strong>
+                <strong>
+                  {dimension.scale === "qualitative"
+                    ? dimension.levelLabel || "无法评价"
+                    : dimension.score
+                      ? dimension.score.toFixed(Number.isInteger(dimension.score) ? 0 : 1)
+                      : "—"}
+                  {dimension.scale === "numeric" && <small> / 10</small>}
+                </strong>
               </div>
             </header>
             {hasDetails ? (
@@ -48,7 +59,7 @@ export function ReviewDimensionDetails({ dimensions }: { dimensions: ReviewDimen
                     <div><span>主要缺口</span>{dimension.gaps.length ? <ul>{dimension.gaps.map((item, index) => <li key={`${dimension.key}-gap-${index}`}>{item}</li>)}</ul> : <p>没有影响判断的主要缺口。</p>}</div>
                   </div>
                 )}
-                {dimension.evidence.length > 0 && <div className="dimension-evidence"><span>页码证据</span>{dimension.evidence.map((item, index) => <p key={`${dimension.key}-evidence-${index}`}><b>第 {item.page} 页 · {item.kind === "fact" ? "原文事实" : "评阅推断"}</b>{item.observation}</p>)}</div>}
+                {dimension.evidence.length > 0 && <div className="dimension-evidence"><span>页码证据</span>{dimension.evidence.map((item, index) => <p key={`${dimension.key}-evidence-${index}`}><b>第 {item.page} 页 · {item.kind === "fact" ? "原文事实" : "评阅推断"}</b>{item.quote && <q>{item.quote}</q>}{item.observation}</p>)}</div>}
                 {dimension.nextAction && <div className="dimension-next-action"><span>优先行动</span><p>{dimension.nextAction}</p></div>}
               </div>
             ) : <p className="dimension-history-note">该历史评阅没有保存 v1.1 所需的逐维解释和信息充分程度。</p>}
