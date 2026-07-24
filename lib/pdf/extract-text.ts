@@ -33,8 +33,19 @@ export async function extractPdfPages(input: ArrayBuffer | Uint8Array) {
       "当前运行环境不支持服务端 PDF 文字提取。",
     );
   }
-  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const loadingTask = getDocument({ data });
+  const [{ getDocument, GlobalWorkerOptions }, { resolve, sep }, { pathToFileURL }] = await Promise.all([
+    import("pdfjs-dist/legacy/build/pdf.mjs"),
+    import("node:path"),
+    import("node:url"),
+  ]);
+  const pdfJsRoot = resolve(process.cwd(), "node_modules", "pdfjs-dist");
+  GlobalWorkerOptions.workerSrc = pathToFileURL(
+    resolve(pdfJsRoot, "legacy", "build", "pdf.worker.mjs"),
+  ).href;
+  const standardFontDataUrl = pathToFileURL(
+    `${resolve(pdfJsRoot, "standard_fonts")}${sep}`,
+  ).href;
+  const loadingTask = getDocument({ data, standardFontDataUrl });
 
   try {
     const document = await loadingTask.promise;
@@ -78,6 +89,7 @@ export async function extractPdfPages(input: ArrayBuffer | Uint8Array) {
     };
   } catch (error) {
     if (error instanceof PdfTextExtractionError) throw error;
+    console.error("PDF text extraction failed.", error);
     throw new PdfTextExtractionError(
       "PDF_EXTRACTION_FAILED",
       "无法提取 PDF 文字，请确认文件没有损坏或加密。",
