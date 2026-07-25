@@ -9,7 +9,7 @@ import {
   buildReviewUserPrompt as buildChineseReviewUserPrompt,
 } from "./review-prompt-zh";
 
-export const RUBRIC_VERSION = "2.0.0";
+export const RUBRIC_VERSION = "2.1.0";
 
 export const PROMPT_VERSIONS = {
   en: ENGLISH_PROMPT_VERSION,
@@ -22,7 +22,6 @@ export type ReviewPromptInput = {
   title: string;
   researchMonth: string;
   extractedPages: Array<{ page: number; text: string }>;
-  monthlyPlan?: string | null;
   previousContext?: string | null;
 };
 

@@ -6,7 +6,6 @@ type PromptInput = {
   title: string;
   researchMonth: string;
   extractedPages: Array<{ page: number; text: string }>;
-  monthlyPlan?: string | null;
   previousContext?: string | null;
 };
 

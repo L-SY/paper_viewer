@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { PdfReader } from "@/components/pdf-reader";
+import { OptionalPdfReader } from "@/components/optional-pdf-reader";
 import { getCurrentMembership } from "@/lib/auth/current-membership";
 import { getMonthContext } from "@/lib/monthly-time";
 
@@ -51,7 +51,7 @@ export default async function MyPaperPage() {
     <AppShell surface="student">
       <header className="page-header"><div><div className="eyebrow">{month.compactLabel}</div><h1>{title}</h1></div>{reviewId && <div className="header-actions"><Link className="button button-secondary" href={`/papers/${reviewId}`}>查看评阅</Link></div>}</header>
       {pdfUrl
-        ? <section className="paper-panel standalone-reader" aria-label="本月论文 PDF"><PdfReader url={pdfUrl} filename={filename} pageCount={pageCount} sizeLabel={sizeLabel} /></section>
+        ? <OptionalPdfReader url={pdfUrl} filename={filename} pageCount={pageCount} sizeLabel={sizeLabel} />
         : <section className="content-section"><p className="empty-copy">本月尚未提交 PDF。</p></section>}
     </AppShell>
   );

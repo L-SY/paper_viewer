@@ -12,14 +12,10 @@ export default async function GroupPage({ searchParams }: { searchParams: Promis
   const query = await searchParams;
   const initialInvite = Array.isArray(query.invite) ? query.invite[0] : query.invite;
   let groupId: string | null = null;
-  let planDay = 5;
-  let planTime = "23:59";
   let paperTime = "23:59";
   const session = await getCurrentMembership();
   if (session.membership?.role === "teacher") {
     groupId = session.membership.group_id;
-    planDay = session.group?.plan_deadline_day || 5;
-    planTime = shortTime(session.group?.plan_deadline_time);
     paperTime = shortTime(session.group?.paper_deadline_time);
   }
   if (session.membership?.role === "student") {
@@ -39,7 +35,7 @@ export default async function GroupPage({ searchParams }: { searchParams: Promis
         </section>
         <section>
           <div className="section-heading"><h2>月度规则</h2></div>
-          <GroupSettingsForm groupId={groupId} planDay={planDay} planTime={planTime} paperTime={paperTime} />
+          <GroupSettingsForm groupId={groupId} paperTime={paperTime} />
         </section>
       </div>
     </PlaceholderPage>

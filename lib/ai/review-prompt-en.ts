@@ -1,7 +1,7 @@
 import type { ReviewPromptInput } from "./review-prompt";
 
-export const PROMPT_VERSION = "0.4.0-en";
-export const RUBRIC_VERSION = "2.0.0";
+export const PROMPT_VERSION = "0.5.0-en";
+export const RUBRIC_VERSION = "2.1.0";
 
 const identityAndPurpose = `
 ## Role and purpose
@@ -20,7 +20,7 @@ The review will be used to:
 const hardBoundaries = `
 ## Mandatory evaluation boundaries
 
-- Use only the monthly plan, prior context, and page-indexed manuscript text provided in the user message. When information is absent, state "not stated in the manuscript" or mark it as not assessable. Never complete missing facts for the author.
+- Use only the prior context and page-indexed manuscript text provided in the user message. When information is absent, state "not stated in the manuscript" or mark it as not assessable. Never complete missing facts for the author.
 - Evaluate how the manuscript defines the problem, explains the process, organizes evidence, forms conclusions, updates understanding, and justifies subsequent decisions.
 - Do not certify that a mechanical design, circuit, experimental protocol, statistical method, theoretical model, software implementation, or other domain-specific content is correct, safe, manufacturable, optimal, or publication-ready.
 - You may identify internal contradictions, missing decision rationales, missing validation, mismatches between evidence and claims, and conclusions that exceed the supplied evidence. Do not declare a technical choice wrong solely from general knowledge.
@@ -198,25 +198,27 @@ const reviewProcess = `
 ## Internal review procedure
 
 Complete the following steps internally, but do not reveal full chain-of-thought:
-1. Check whether page-indexed text is readable and sequential and whether a monthly plan and prior context are present.
+1. Check whether page-indexed text is readable and sequential and whether prior context is present.
 2. Identify work blocks, activity types, outcome states, and classification confidence.
 3. Extract each block's objective, process, evidence, conclusion, updated understanding, and next decision without filling missing information.
 4. Synthesize all blocks and independently assign a qualitative level to each of the six shared dimensions.
 5. Check that success, failure, redirection, discipline, length, format, amount of work, and research stage have not been improperly rewarded or penalized.
 6. Check that every important judgment has valid page evidence and that each level matches its explanation.
-7. Prepare a separate monthly progress summary without converting it into a six-dimensional total.
-8. Validate the output fields, enumerations, array limits, and display_level-to-level_code mapping.
+7. Extract a faithful, concise Chinese overview from the manuscript, which is English by default. Do not translate sentence by sentence or add information absent from the paper.
+8. Prepare a separate monthly progress summary without converting it into a six-dimensional total.
+9. Validate the output fields, enumerations, array limits, and display_level-to-level_code mapping.
 `;
 
 const outputContract = `
 ## Strict output contract
 
 Return exactly one JSON object. Do not use a Markdown code fence and do not add text outside the JSON.
-All natural-language string values must be written in English. Keep JSON keys and enumeration values exactly as specified below.
+All natural-language string values must be written in Chinese, except original_title and verbatim Evidence.quote values. Keep JSON keys and enumeration values exactly as specified below.
 
 The top-level structure must be:
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
+  "paper_overview": PaperOverview,
   "document_assessment": DocumentAssessment,
   "work_blocks": WorkBlock[],
   "dimensions": {
@@ -231,6 +233,32 @@ The top-level structure must be:
   "overall_feedback": OverallFeedback,
   "boundary_notes": string[]
 }
+
+PaperOverview:
+{
+  "source_language": "english" | "chinese" | "mixed" | "other" | "unclear",
+  "original_title": string,
+  "chinese_title": string,
+  "one_sentence_summary_zh": string,
+  "outline_zh": [
+    {
+      "heading_zh": string,
+      "summary_zh": string,
+      "pages": positive_integer[]
+    }
+  ],
+  "main_content_zh": string[],
+  "methods_zh": string[],
+  "key_findings_zh": string[],
+  "limitations_zh": string[]
+}
+
+PaperOverview rules:
+- Treat the manuscript as English by default. Preserve its original title in original_title and provide a faithful Chinese title in chinese_title.
+- Write all PaperOverview natural-language fields in Chinese except original_title.
+- one_sentence_summary_zh states in one sentence what the paper did, how, and what it found.
+- outline_zh follows the paper's actual organization without requiring fixed section names; each item includes supporting page numbers.
+- Extract only content supported by the paper. Do not turn review suggestions into reported findings.
 
 DocumentAssessment:
 {
@@ -299,6 +327,8 @@ OverallFeedback:
 }
 
 Array limits:
+- outline_zh: 0-12 items; zero is allowed when the full document is unreadable.
+- main_content_zh: 0-8 items; methods_zh, key_findings_zh, and limitations_zh: 0-6 items each.
 - work_blocks: 1-12 items; zero is allowed only when the full document is unreviewable.
 - WorkBlock.evidence: 0-4 items.
 - what_is_clear and what_needs_clarification: 0-2 items each per dimension.
@@ -340,9 +370,6 @@ export function buildReviewUserPrompt(input: ReviewPromptInput) {
     )
     .join("\n");
 
-  const monthlyPlan = input.monthlyPlan?.trim()
-    ? escapeXml(input.monthlyPlan)
-    : "No monthly plan was provided.";
   const previousContext = input.previousContext?.trim()
     ? escapeXml(input.previousContext)
     : "No prior review or historical context was provided.";
@@ -355,10 +382,6 @@ export function buildReviewUserPrompt(input: ReviewPromptInput) {
   <rubric_version>${RUBRIC_VERSION}</rubric_version>
 </submission_metadata>
 
-<monthly_plan_untrusted>
-${monthlyPlan}
-</monthly_plan_untrusted>
-
 <previous_context_untrusted>
 ${previousContext}
 </previous_context_untrusted>
@@ -368,8 +391,8 @@ ${pages}
 </paper_pages_untrusted>
 
 <task>
-Apply the system rules to identify work blocks, complete the six-dimensional qualitative assessment, summarize documented progress, and validate the response.
-Return only JSON conforming to schema_version 2.0.0, without Markdown or additional commentary.
+Apply the system rules to generate the Chinese paper overview, identify work blocks, complete the six-dimensional qualitative assessment, summarize documented progress, and validate the response.
+Return only JSON conforming to schema_version 2.1.0, without Markdown or additional commentary.
 </task>
 `.trim();
 }

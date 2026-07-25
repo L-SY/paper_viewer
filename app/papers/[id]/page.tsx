@@ -6,12 +6,23 @@ import { ReviewRadar } from "@/components/review-radar";
 import { ReviewDimensionDetails, type ReviewConfidence, type ReviewDimensionDetail, type ReviewEvidence } from "@/components/review-dimension-details";
 import { qualitativeReviewDimensions, reviewDimensions } from "@/lib/review-dimensions";
 import { TeacherReviewForm } from "@/components/teacher-review-form";
-import { PdfReader } from "@/components/pdf-reader";
+import { OptionalPdfReader } from "@/components/optional-pdf-reader";
 import { getCurrentMembership } from "@/lib/auth/current-membership";
 
 export const metadata: Metadata = { title: "论文评阅" };
 type ReviewDimension = ReviewDimensionDetail & { resultKey: string };
 type ReviewRunStatus = "queued" | "running" | "completed" | "failed";
+type PaperOutlineItem = { heading: string; summary: string; pages: number[] };
+type PaperOverview = {
+  originalTitle: string;
+  chineseTitle: string;
+  oneSentenceSummary: string;
+  mainContent: string[];
+  methods: string[];
+  keyFindings: string[];
+  limitations: string[];
+  outline: PaperOutlineItem[];
+};
 
 const qualitativeLevelLabels: Record<string, string> = {
   needs_clarification: "需要补充",
@@ -148,6 +159,20 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
   let improvements = ["目前只报告汇总误检率，缺少每个场景的样本量、方差或置信区间。建议下月优先补齐逐场景统计，并明确软地面实验中摩擦参数的设置范围。"];
   let uncertaintyNotes = ["当前演示只展示论文节选，因此表达与学术规范维度的信息充分程度较低。"];
   let reviewSummary = "";
+  let paperOverview: PaperOverview | null = {
+    originalTitle: "Contact State Estimation for Wheeled-Legged Robots",
+    chineseTitle: "面向轮腿机器人的接触状态估计方法探索",
+    oneSentenceSummary: "本文融合足端运动残差与电机电流信息构建轻量接触状态估计流程，并通过仿真比较验证高速步态下的改善及软地面场景中的局限。",
+    mainContent: ["界定单一阈值在非结构化地形中的误检问题。", "构建双信息融合流程并完成初步消融对比。"],
+    methods: ["时间对齐与特征归一化", "候选接触窗口检测", "运动学残差与电机电流置信度融合"],
+    keyFindings: ["融合方案降低了高速步态下的误检。", "慢速软地面场景未获得稳定改善。"],
+    limitations: ["当前仅完成仿真验证。", "软地面摩擦参数及逐场景统计仍不充分。"],
+    outline: [
+      { heading: "研究问题与范围", summary: "提出组合两类信息能否降低单一阈值误检率的问题。", pages: [1] },
+      { heading: "估计流程", summary: "说明时间对齐、归一化、窗口检测和置信度融合。", pages: [1] },
+      { heading: "初步结果与限制", summary: "报告高速步态改善和软地面未稳定改善。", pages: [1] },
+    ],
+  };
   let progressSummary: {
     documentedWork: string[];
     completedOrAdvanced: string[];
@@ -246,6 +271,36 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
     uncertaintyNotes = asTextList(ai?.uncertainty_notes);
     const rawOutput = asRecord(ai?.raw_output);
     rawReview = asRecord(rawOutput?.review);
+    const overview = asRecord(rawReview?.paper_overview);
+    if (overview) {
+      const outline = Array.isArray(overview.outline_zh)
+        ? overview.outline_zh.flatMap((item) => {
+          const entry = asRecord(item);
+          if (!entry) return [];
+          const pages = Array.isArray(entry.pages)
+            ? entry.pages.map(Number).filter((page) => Number.isInteger(page) && page > 0)
+            : [];
+          return [{
+            heading: typeof entry.heading_zh === "string" ? entry.heading_zh : "未命名部分",
+            summary: typeof entry.summary_zh === "string" ? entry.summary_zh : "",
+            pages,
+          }];
+        })
+        : [];
+      paperOverview = {
+        originalTitle: typeof overview.original_title === "string" ? overview.original_title : version.title,
+        chineseTitle: typeof overview.chinese_title === "string" ? overview.chinese_title : version.title,
+        oneSentenceSummary: typeof overview.one_sentence_summary_zh === "string" ? overview.one_sentence_summary_zh : "",
+        mainContent: asTextList(overview.main_content_zh),
+        methods: asTextList(overview.methods_zh),
+        keyFindings: asTextList(overview.key_findings_zh),
+        limitations: asTextList(overview.limitations_zh),
+        outline,
+      };
+      paperTitle = paperOverview.chineseTitle || paperOverview.originalTitle || paperTitle;
+    } else {
+      paperOverview = null;
+    }
     const overallFeedback = asRecord(rawReview?.overall_feedback);
     reviewSummary = typeof overallFeedback?.summary === "string" ? overallFeedback.summary : "";
     const progress = asRecord(rawReview?.progress_summary);
@@ -274,12 +329,9 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
 
   return (
     <AppShell>
-      <header className="page-header"><div><div className="eyebrow">{compactMonth} / VERSION {versionNumber}</div><h1>{paperTitle}</h1><p>{studentName} · {monthLabel}月度论文 · {submittedLabel} 提交</p></div><div className="header-actions">{pdfUrl ? <a className="button button-secondary" href={pdfUrl} download={filename}>下载原始 PDF</a> : <button className="button button-secondary" type="button" disabled>下载原始 PDF</button>}</div></header>
+      <header className="page-header"><div><div className="eyebrow">{compactMonth} / VERSION {versionNumber}</div><h1>{paperTitle}</h1>{paperOverview?.originalTitle && paperOverview.originalTitle !== paperTitle && <p className="original-paper-title">{paperOverview.originalTitle}</p>}<p>{studentName} · {monthLabel}月度论文 · {submittedLabel} 提交</p></div><div className="header-actions">{pdfUrl ? <a className="button button-secondary" href={pdfUrl} download={filename}>下载原始 PDF</a> : <button className="button button-secondary" type="button" disabled>下载原始 PDF</button>}</div></header>
 
-      <div className="paper-layout">
-        <section className="paper-panel" aria-label="PDF 在线预览">{pdfUrl ? <PdfReader url={pdfUrl} filename={filename} pageCount={pageCount} sizeLabel={`${sizeMb} MB`} /> : <><div className="panel-toolbar"><div><strong>{filename}</strong><span>{pageCount} 页 · {sizeMb} MB</span></div></div><div className="pdf-stage"><article className="pdf-page"><h2>{paperTitle}</h2><div className="authors">Yuhang Chen · E3 Laboratory</div><h3>Abstract</h3><p>针对轮腿机器人在非结构化地形中接触状态难以稳定估计的问题，本月工作构建了一套基于足端运动残差与电机电流信息的轻量估计流程，并在仿真环境中完成初步消融验证。</p><h3>I. Introduction</h3><p>本月研究的目标不是提出完整的新算法，而是回答一个更小的问题：组合运动学残差和电机电流能否降低单一阈值的误检率？</p><div className="figure-placeholder">Fig. 1. Contact estimation pipeline and experimental setup</div><h3>II. Method</h3><p>方法包含时间对齐、特征归一化、候选接触窗口检测与置信度融合四个步骤。</p><h3>III. Preliminary Results</h3><p>融合方法降低了高速步态下的误检，但慢速软地面场景没有稳定改善。</p></article></div></>}</section>
-
-        <section className="review-panel" aria-label="评阅详情">
+      <section className="review-panel review-panel-wide" aria-label="评阅详情">
           <div className="review-header">
             <div className="review-header-top">
               <div>
@@ -301,13 +353,25 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
             />
           </div>
           <div className="review-body">
+            {paperOverview && (
+              <section className="paper-overview">
+                <div className="section-heading"><h2>论文中文概览</h2></div>
+                <p className="overview-lead">{paperOverview.oneSentenceSummary}</p>
+                {paperOverview.mainContent.length > 0 && <div className="overview-main"><h3>主要内容</h3><ul>{paperOverview.mainContent.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul></div>}
+                {paperOverview.outline.length > 0 && <div className="overview-outline"><h3>文章大纲</h3><ol>{paperOverview.outline.map((item, index) => <li key={`${item.heading}-${index}`}><div><strong>{item.heading}</strong>{item.pages.length > 0 && <span>第 {item.pages.join("、")} 页</span>}</div><p>{item.summary}</p></li>)}</ol></div>}
+                <div className="overview-grid">
+                  <div><h3>方法</h3>{paperOverview.methods.length ? <ul>{paperOverview.methods.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul> : <p>文中未单独说明。</p>}</div>
+                  <div><h3>主要结果</h3>{paperOverview.keyFindings.length ? <ul>{paperOverview.keyFindings.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul> : <p>文中未形成明确结果。</p>}</div>
+                  <div><h3>局限与未决问题</h3>{paperOverview.limitations.length ? <ul>{paperOverview.limitations.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul> : <p>文中未单独说明。</p>}</div>
+                </div>
+              </section>
+            )}
             {reviewSummary && <p className="review-summary">{reviewSummary}</p>}
             {progressSummary && (
               <div className="review-progress">
                 <div><span>记录的工作</span><p>{progressSummary.documentedWork.join("；") || "文中未说明"}</p></div>
                 <div><span>推进或完成</span><p>{progressSummary.completedOrAdvanced.join("；") || "文中未说明"}</p></div>
                 <div><span>受阻、变化或待判断</span><p>{progressSummary.blockedChangedOrInconclusive.join("；") || "无单独记录"}</p></div>
-                <div><span>与月初计划</span><p>{progressSummary.planAlignment || "未提供月初计划或文中未说明"}</p></div>
               </div>
             )}
             <div className="radar-and-scores"><div className="radar-wrap"><ReviewRadar dimensions={dimensions} maxScore={reviewMode === "qualitative" ? 4 : 10} /></div><div className="score-list">{dimensions.map((dimension) => <div className="dimension-row" key={dimension.key}><label>{dimension.name}</label><strong>{dimension.scale === "qualitative" ? dimension.levelLabel : dimension.score ? dimension.score.toFixed(Number.isInteger(dimension.score) ? 0 : 1) : "—"}</strong><div><span style={{ width: `${Math.max(0, Math.min(100, dimension.score / dimension.maxScore * 100))}%` }} /></div></div>)}</div></div>
@@ -316,11 +380,10 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
             <div className="review-block warning"><h3><span />主要不足与下一步</h3>{improvements.length ? improvements.map((item, index) => <p key={`${index}-${item}`}>{item}</p>) : <p className="empty-copy">AI 评阅尚未生成。</p>}</div>
             {uncertaintyNotes.length > 0 && <div className="review-block uncertainty"><h3><span />信息限制</h3>{uncertaintyNotes.map((item, index) => <p key={`${index}-${item}`}>{item}</p>)}</div>}
             {workBlocks.length > 0 && <details className="review-details"><summary>查看工作区块</summary>{workBlocks.map((block, index) => <div key={`${block.title}-${index}`}><strong>{block.title}</strong><span>{block.outcome}</span><p>{block.summary}</p></div>)}</details>}
-            {rawReview && <details className="review-details raw-review"><summary>查看原始 AI 结果</summary><pre>{JSON.stringify(rawReview, null, 2)}</pre></details>}
             {isTeacher ? <TeacherReviewForm submissionVersionId={submissionVersionId} initialScore={mentorScore ?? 8.5} initialComment={mentorScore == null ? "" : mentorComment} /> : <div className="mentor-box"><header><strong>导师评分与评语</strong><span>{mentorScore == null ? "待评语" : `${mentorScore.toFixed(1)} / 10`}</span></header><p>{mentorComment}</p></div>}
           </div>
-        </section>
-      </div>
+      </section>
+      {pdfUrl && <OptionalPdfReader url={pdfUrl} filename={filename} pageCount={pageCount} sizeLabel={`${sizeMb} MB`} />}
     </AppShell>
   );
 }

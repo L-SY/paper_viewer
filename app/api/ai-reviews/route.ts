@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
   const { data: record } = await session.supabase
     .from("monthly_records")
-    .select("id, group_id, student_id, research_month, plan_text")
+    .select("id, group_id, student_id, research_month")
     .eq("id", version.monthly_record_id)
     .maybeSingle();
   if (!record || record.group_id !== session.membership.group_id) {
@@ -125,7 +125,6 @@ export async function POST(request: Request) {
     title: version.title,
     researchMonth: record.research_month,
     extractedPages: [],
-    monthlyPlan: record.plan_text,
   }, parsed.data.language);
 
   const queuedReview = {
@@ -196,7 +195,6 @@ export async function POST(request: Request) {
       title: version.title,
       researchMonth: record.research_month,
       extractedPages: extracted.pages,
-      monthlyPlan: record.plan_text,
     }, parsed.data.language);
     const provider = new DeepSeekReviewProvider({
       userId: `paper_${version.id.replaceAll("-", "")}`,

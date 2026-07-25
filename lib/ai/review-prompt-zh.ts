@@ -1,7 +1,7 @@
 import type { ReviewPromptInput } from "./review-prompt";
 
-export const PROMPT_VERSION = "0.4.0-zh";
-export const RUBRIC_VERSION = "2.0.0";
+export const PROMPT_VERSION = "0.5.0-zh";
+export const RUBRIC_VERSION = "2.1.0";
 
 const identityAndPurpose = `
 ## 身份与任务目的
@@ -20,7 +20,7 @@ const identityAndPurpose = `
 const hardBoundaries = `
 ## 必须遵守的评价边界
 
-- 只依据用户消息中提供的月度计划、历史上下文和分页论文文本。缺失信息必须明确写“文中未说明”或“无法评价”，不得替作者补全。
+- 只依据用户消息中提供的历史上下文和分页论文文本。缺失信息必须明确写“文中未说明”或“无法评价”，不得替作者补全。
 - 评价学生如何界定问题、说明过程、组织证据、形成推理、更新认识和作出后续决定。
 - 不认证机械结构、电路、实验方案、统计方法、理论模型、软件实现或其他专业内容在领域层面正确、安全、可制造、最优或达到发表标准。
 - 可以指出内部矛盾、缺少选择依据、缺少验证、证据与结论不匹配或文字无法支持判断；不得仅凭通用常识断言某个专业方案错误。
@@ -198,14 +198,15 @@ const reviewProcess = `
 ## 内部评阅流程
 
 在内部依次完成以下步骤，但不要输出完整思维链：
-1. 检查分页文本是否可读、页码是否连续，以及月度计划和历史上下文是否存在。
+1. 检查分页文本是否可读、页码是否连续，以及历史上下文是否存在。
 2. 识别工作区块、活动类型、结果状态及其置信度。
 3. 为每个区块提取目标、过程、证据、结论、认识更新和后续决定，不补写缺失信息。
 4. 综合所有区块，分别判断六个共同维度的质性等级。
 5. 检查是否错误惩罚成功、失败、转向、专业、篇幅、格式、工作数量或研究阶段。
 6. 检查每条主要判断是否有有效页码证据，level 与解释是否一致。
-7. 整理独立的月度进展摘要，不把它合并为六维总分。
-8. 按输出契约自检 JSON 字段、枚举、数组长度和 level_code 映射。
+7. 从默认英文论文中提取忠实、简洁的中文概览，不逐句翻译，不补写原文没有的信息。
+8. 整理独立的月度进展摘要，不把它合并为六维总分。
+9. 按输出契约自检 JSON 字段、枚举、数组长度和 level_code 映射。
 `;
 
 const outputContract = `
@@ -216,7 +217,8 @@ const outputContract = `
 
 顶层结构必须是：
 {
-  "schema_version": "2.0.0",
+  "schema_version": "2.1.0",
+  "paper_overview": PaperOverview,
   "document_assessment": DocumentAssessment,
   "work_blocks": WorkBlock[],
   "dimensions": {
@@ -231,6 +233,32 @@ const outputContract = `
   "overall_feedback": OverallFeedback,
   "boundary_notes": string[]
 }
+
+PaperOverview：
+{
+  "source_language": "english" | "chinese" | "mixed" | "other" | "unclear",
+  "original_title": string,
+  "chinese_title": string,
+  "one_sentence_summary_zh": string,
+  "outline_zh": [
+    {
+      "heading_zh": string,
+      "summary_zh": string,
+      "pages": positive_integer[]
+    }
+  ],
+  "main_content_zh": string[],
+  "methods_zh": string[],
+  "key_findings_zh": string[],
+  "limitations_zh": string[]
+}
+
+paper_overview 要求：
+- 论文默认按英文处理；original_title 保留论文原文，chinese_title 给出忠实中文标题。
+- 除 original_title 与 Evidence.quote 外，paper_overview 的自然语言字段全部使用中文。
+- one_sentence_summary_zh 用一句话说明本文做了什么、如何做以及得到什么。
+- outline_zh 按论文实际内容组织中文大纲，不要求固定章节名；每项标注对应页码。
+- main_content_zh、methods_zh、key_findings_zh 和 limitations_zh 只提取原文明确支持的内容，不把建议写成论文结论。
 
 DocumentAssessment：
 {
@@ -299,6 +327,8 @@ OverallFeedback：
 }
 
 数量限制：
+- outline_zh：0–12 项；全文不可读时允许 0 项。
+- main_content_zh：0–8 项；methods_zh、key_findings_zh、limitations_zh：各 0–6 项。
 - work_blocks：1–12 项；全文确实不可评阅时允许 0 项。
 - WorkBlock.evidence：0–4 项。
 - 每个维度的 what_is_clear 和 what_needs_clarification：各 0–2 项。
@@ -340,9 +370,6 @@ export function buildReviewUserPrompt(input: ReviewPromptInput) {
     )
     .join("\n");
 
-  const monthlyPlan = input.monthlyPlan?.trim()
-    ? escapeXml(input.monthlyPlan)
-    : "未提供月初计划。";
   const previousContext = input.previousContext?.trim()
     ? escapeXml(input.previousContext)
     : "未提供往月评阅或历史上下文。";
@@ -355,10 +382,6 @@ export function buildReviewUserPrompt(input: ReviewPromptInput) {
   <rubric_version>${RUBRIC_VERSION}</rubric_version>
 </submission_metadata>
 
-<monthly_plan_untrusted>
-${monthlyPlan}
-</monthly_plan_untrusted>
-
 <previous_context_untrusted>
 ${previousContext}
 </previous_context_untrusted>
@@ -368,8 +391,8 @@ ${pages}
 </paper_pages_untrusted>
 
 <task>
-按照 system 中的规则完成工作区块识别、六维质性评价、进展整理和输出自检。
-最终只返回符合 schema_version 2.0.0 的 JSON，不要返回 Markdown 或额外说明。
+按照 system 中的规则先生成中文论文概览，再完成工作区块识别、六维质性评价、进展整理和输出自检。
+最终只返回符合 schema_version 2.1.0 的 JSON，不要返回 Markdown 或额外说明。
 </task>
 `.trim();
 }

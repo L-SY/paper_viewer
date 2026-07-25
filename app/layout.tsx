@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = forwardedProtocol === "http" || forwardedProtocol === "https" ? forwardedProtocol : host.startsWith("localhost") ? "http" : "https";
   const metadataBase = new URL(`${protocol}://${host}`);
   const title = "PaperView · 月度科研评阅";
-  const description = "面向课题组的月度计划、论文提交、AI 评阅与导师反馈系统。";
+  const description = "面向课题组的月度论文提交、AI 中文概览、形成性评阅与导师反馈系统。";
   return {
     metadataBase,
     title: { default: title, template: "%s · PaperView" },

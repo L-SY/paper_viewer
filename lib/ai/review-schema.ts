@@ -90,8 +90,25 @@ const workBlockSchema = z.object({
   ]),
 });
 
+const paperOverviewSchema = z.object({
+  source_language: z.enum(["english", "chinese", "mixed", "other", "unclear"]),
+  original_title: z.string(),
+  chinese_title: z.string(),
+  one_sentence_summary_zh: z.string().min(1),
+  outline_zh: z.array(z.object({
+    heading_zh: z.string().min(1),
+    summary_zh: z.string().min(1),
+    pages: z.array(z.number().int().positive()).max(8),
+  })).max(12),
+  main_content_zh: z.array(z.string().min(1)).max(8),
+  methods_zh: z.array(z.string().min(1)).max(6),
+  key_findings_zh: z.array(z.string().min(1)).max(6),
+  limitations_zh: z.array(z.string().min(1)).max(6),
+});
+
 export const aiReviewSchema = z.object({
-  schema_version: z.literal("2.0.0"),
+  schema_version: z.literal("2.1.0"),
+  paper_overview: paperOverviewSchema,
   document_assessment: z.object({
     status: z.enum(["reviewable", "partially_reviewable", "unreviewable"]),
     summary: z.string().min(1),
