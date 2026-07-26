@@ -18,7 +18,7 @@ export async function getCurrentMembership() {
   if (!user) return { configured: true as const, supabase, user: null, profile: null, membership: null, memberships: [] as Membership[], group: null };
 
   const [{ data: profile }, { data: membershipRows }] = await Promise.all([
-    supabase.from("profiles").select("display_name, discipline, research_stage, onboarding_completed").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("display_name, discipline, onboarding_completed").eq("id", user.id).maybeSingle(),
     supabase.from("group_members").select("group_id, role, status, joined_at").eq("user_id", user.id).eq("status", "active").order("joined_at", { ascending: true }),
   ]);
   const memberships = (membershipRows || []) as Membership[];

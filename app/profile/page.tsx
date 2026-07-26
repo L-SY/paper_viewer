@@ -6,16 +6,15 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "个人资料" };
 
 export default async function ProfilePage() {
-  const values: ProfileValues = { displayName: "林老师", discipline: "机器人", researchStage: "research" };
+  const values: ProfileValues = { displayName: "林老师", discipline: "机器人" };
   const supabase = await createSupabaseServerClient();
   if (supabase) {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { data } = await supabase.from("profiles").select("display_name, discipline, research_stage").eq("id", user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("display_name, discipline").eq("id", user.id).maybeSingle();
       if (data) {
         values.displayName = data.display_name || values.displayName;
         values.discipline = data.discipline || "";
-        values.researchStage = data.research_stage || "exploring";
       }
     }
   }
