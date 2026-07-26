@@ -106,7 +106,7 @@ export default async function StudentDashboardPage() {
     <AppShell surface="student">
       <header className="page-header">
         <div><div className="eyebrow">本月 {demo && <span className="demo-tag">演示</span>}</div><h1>{month.monthLabel}</h1></div>
-        {versionId && <div className="header-actions"><Link className="button button-secondary" href={`/papers/${versionId}`}>查看论文与评阅</Link></div>}
+        {versionId && <div className="header-actions"><Link className="button button-secondary" href={`/papers/${versionId}?from=current`}>查看论文与评阅</Link></div>}
       </header>
       <section className="student-status-row">
         <div><span>论文提交</span><strong>{versionNumber ? `v${versionNumber}` : "未提交"}</strong><small>{versionMeta}</small></div>
@@ -119,7 +119,7 @@ export default async function StudentDashboardPage() {
       </section>
       {versionId && (
         <section className="content-section">
-          <div className="section-heading"><h2>最新反馈</h2><Link className="text-link" href={`/papers/${versionId}`}>查看完整概览与评阅</Link></div>
+          <div className="section-heading"><h2>最新反馈</h2><Link className="text-link" href={`/papers/${versionId}?from=current`}>查看完整概览与评阅</Link></div>
           <div className="feedback-strip">
             <div><span>AI 评阅</span><p>{aiScore == null ? aiState : `${aiScore.toFixed(1)} / 10`}</p></div>
             <div><span>下一步重点</span><p>{aiFeedback}</p></div>

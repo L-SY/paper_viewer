@@ -5,7 +5,7 @@ import { SidebarNav } from "./sidebar-nav";
 import { AccountFooter } from "./account-footer";
 import { getCurrentMembership, type AppRole } from "@/lib/auth/current-membership";
 
-export async function AppShell({ children, surface }: { children: ReactNode; surface?: AppRole }) {
+export async function AppShell({ children, surface, navActiveHref }: { children: ReactNode; surface?: AppRole; navActiveHref?: string }) {
   const session = await getCurrentMembership();
   let role: AppRole = surface || "teacher";
   let displayName = role === "teacher" ? "林老师" : "陈雨航";
@@ -32,7 +32,7 @@ export async function AppShell({ children, surface }: { children: ReactNode; sur
           <span className="brand-mark">P</span>
           <span><strong>PaperView</strong><small>月度科研评阅</small></span>
         </Link>
-        <SidebarNav role={role} />
+        <SidebarNav role={role} activeHref={navActiveHref} />
         <div className="sidebar-footer">
           <div className="group-chip"><span>{groupMark}</span><div><strong>{groupName}</strong></div></div>
           <AccountFooter configured={session.configured} displayName={displayName} email={email} role={roleLabel} />

@@ -17,13 +17,15 @@ const studentNav = [
   { href: "/papers", label: "组内论文", mark: "文" },
 ];
 
-export function SidebarNav({ role }: { role: AppRole }) {
+export function SidebarNav({ role, activeHref }: { role: AppRole; activeHref?: string }) {
   const pathname = usePathname();
   const nav = role === "teacher" ? teacherNav : studentNav;
   return (
     <nav className="sidebar-nav" aria-label={`${role === "teacher" ? "导师" : "学生"}导航`}>
       {nav.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = activeHref
+          ? item.href === activeHref
+          : pathname === item.href || pathname.startsWith(`${item.href}/`);
         return <Link key={item.href} href={item.href} className={active ? "active" : ""}><span>{item.mark}</span>{item.label}</Link>;
       })}
     </nav>

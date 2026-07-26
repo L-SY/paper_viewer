@@ -194,7 +194,7 @@ export function MonthlySubmissionForm({
       return;
     }
 
-    router.push(`/papers/${version.id}`);
+    router.push(`/papers/${version.id}?from=current`);
     router.refresh();
   }
 
@@ -227,7 +227,7 @@ export function MonthlySubmissionForm({
                   <li key={version.id}>
                     <span>v{version.version_number}</span>
                     <div><strong>{version.original_filename}</strong><small>{bytesToMb(version.size_bytes)} · {version.page_count}页</small></div>
-                    <Link className="text-link" href={`/papers/${version.id}`}>查看</Link>
+                    <Link className="text-link" href={`/papers/${version.id}?from=current`}>查看</Link>
                   </li>
                 ))
                 : <li><span>—</span><div><strong>暂无版本</strong></div></li>}

@@ -6,10 +6,12 @@ export function PaperListTable({
   rows,
   showMonth = false,
   showStudent = true,
+  source = "group",
 }: {
   rows: PaperListRow[];
   showMonth?: boolean;
   showStudent?: boolean;
+  source?: "history" | "group";
 }) {
   if (!rows.length) return <p className="empty-copy">暂无论文。</p>;
 
@@ -43,7 +45,7 @@ export function PaperListTable({
               <td className="score">{row.aiScore == null ? row.aiReviewed ? "已评阅" : "—" : row.aiScore.toFixed(1)}</td>
               <td className="score">{row.teacherScore == null ? "—" : row.teacherScore.toFixed(1)}</td>
               <td><StatusPill status={row.status} /></td>
-              <td className="action-cell"><Link className="text-link" href={`/papers/${row.id}`}>查看</Link></td>
+              <td className="action-cell"><Link className="text-link" href={`/papers/${row.id}?from=${source}`}>查看</Link></td>
             </tr>
           ))}
         </tbody>

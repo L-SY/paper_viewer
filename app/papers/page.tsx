@@ -29,7 +29,7 @@ export default async function GroupPapersPage() {
   return (
     <AppShell surface={role}>
       <header className="page-header"><div><div className="eyebrow">课题组</div><h1>组内论文</h1><p>{month.monthLabel}</p></div></header>
-      <section className="content-section"><PaperListTable rows={rows} /></section>
+      <section className="content-section"><PaperListTable rows={rows} source="group" /></section>
     </AppShell>
   );
 }

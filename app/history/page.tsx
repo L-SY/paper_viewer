@@ -65,7 +65,7 @@ export default async function HistoryPage({
         </form>
       </header>
       <section className="content-section">
-        <PaperListTable rows={rows} showStudent={role === "teacher"} />
+        <PaperListTable rows={rows} showStudent={role === "teacher"} source="history" />
       </section>
     </AppShell>
   );

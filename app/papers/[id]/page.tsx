@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { AiReviewAction } from "@/components/ai-review-action";
@@ -119,12 +120,27 @@ const demoDimensionDetails: Record<string, Omit<ReviewDimensionDetail, "key" | "
   },
 };
 
-export default async function PaperReviewPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PaperReviewPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string | string[] }>;
+}) {
   const { id } = await params;
+  const query = await searchParams;
+  const requestedSource = Array.isArray(query.from) ? query.from[0] : query.from;
+  const source = requestedSource === "current" || requestedSource === "history" || requestedSource === "group"
+    ? requestedSource
+    : "group";
   const session = await getCurrentMembership();
   const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const isDemo = !session.configured;
   const isTeacher = isDemo || session.membership?.role === "teacher";
+  const backHref = source === "current"
+    ? isTeacher ? "/teacher" : "/student"
+    : source === "history" ? "/history" : "/papers";
+  const backLabel = source === "current" ? "返回本月" : source === "history" ? "返回历史" : "返回组内论文";
   let submissionVersionId: string | null = null;
   let studentName = "陈雨航";
   let monthLabel = "2026年7月";
@@ -328,8 +344,8 @@ export default async function PaperReviewPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <AppShell>
-      <header className="page-header"><div><div className="eyebrow">{compactMonth} / VERSION {versionNumber}</div><h1>{paperTitle}</h1>{paperOverview?.originalTitle && paperOverview.originalTitle !== paperTitle && <p className="original-paper-title">{paperOverview.originalTitle}</p>}<p>{studentName} · {monthLabel}月度论文 · {submittedLabel} 提交</p></div><div className="header-actions">{pdfUrl ? <a className="button button-secondary" href={pdfUrl} download={filename}>下载原始 PDF</a> : <button className="button button-secondary" type="button" disabled>下载原始 PDF</button>}</div></header>
+    <AppShell navActiveHref={backHref}>
+      <header className="page-header"><div><div className="eyebrow">{compactMonth} / VERSION {versionNumber}</div><h1>{paperTitle}</h1>{paperOverview?.originalTitle && paperOverview.originalTitle !== paperTitle && <p className="original-paper-title">{paperOverview.originalTitle}</p>}<p>{studentName} · {monthLabel}月度论文 · {submittedLabel} 提交</p></div><div className="header-actions"><Link className="button button-secondary" href={backHref}>{backLabel}</Link>{pdfUrl ? <a className="button button-secondary" href={pdfUrl} download={filename}>下载原始 PDF</a> : <button className="button button-secondary" type="button" disabled>下载原始 PDF</button>}</div></header>
 
       <section className="review-panel review-panel-wide" aria-label="评阅详情">
           <div className="review-header">
