@@ -325,6 +325,8 @@ h3 { margin-bottom: 4px; font-size: 12px; }
 
 .form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; align-items: start; }
 .submission-only-layout { max-width: 900px; }
+.monthly-submit-section .form-section { padding-top: 0; border-top: 0; }
+.monthly-submit-section .aside-card:first-child { padding-top: 0; }
 .form-section { padding: 19px 0; border-top: 1px solid var(--border); }
 .form-section:last-child { border-bottom: 1px solid var(--border); }
 .field-label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 7px; font-size: 10px; font-weight: 650; }
@@ -446,6 +448,12 @@ h3 { margin-bottom: 4px; font-size: 12px; }
 .group-settings-form label { display: flex; flex-direction: column; gap: 6px; color: var(--text-2); font-size: 10px; font-weight: 600; }
 .group-settings-form .text-input { width: 100%; }
 .group-settings-form > div { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; padding-top: 2px; }
+.month-picker { display: flex; align-items: center; gap: 8px; }
+.month-picker label { color: var(--text-3); font-size: 9px; }
+.month-picker .text-input { width: 132px; }
+.paper-list-title { min-width: 260px; max-width: 560px; display: flex; flex-direction: column; gap: 4px; }
+.paper-list-title strong { font-size: 10px; font-weight: 600; }
+.paper-list-title small { display: -webkit-box; overflow: hidden; color: var(--text-2); font-size: 9px; font-weight: 400; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .optional-pdf-card { width: min(100%, 1040px); margin-top: 18px; padding: 13px 15px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid var(--border); border-radius: 7px; background: white; }
 .optional-pdf-card > div:first-child { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .optional-pdf-card strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
@@ -472,6 +480,8 @@ h3 { margin-bottom: 4px; font-size: 12px; }
   .sidebar-nav a { flex: 0 0 auto; }
   .main-content { margin-left: 0; padding: 20px 16px 40px; }
   .page-header { align-items: flex-start; flex-direction: column; }
+  .month-picker { width: 100%; }
+  .month-picker .text-input { flex: 1; width: auto; }
   .cycle-strip { flex-direction: column; }
   .cycle-current { width: 100%; padding: 13px 0; border-right: 0; border-bottom: 1px solid var(--border); }
   .cycle-steps { padding: 14px 0; justify-content: flex-start; }
