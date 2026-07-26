@@ -17,10 +17,15 @@ export function JoinGroupForm({ initialInvite = "" }: { initialInvite?: string }
     if (!supabase) return setMessage("尚未连接 Supabase，暂时不能加入课题组。");
     setLoading(true);
     setMessage(null);
-    const { error } = await supabase.rpc("accept_group_invitation", { invitation_token: invitationToken });
-    if (error) {
+    const response = await fetch("/api/groups/join", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: invitationToken }),
+    });
+    const result = await response.json() as { error?: string };
+    if (!response.ok) {
       setLoading(false);
-      return setMessage(error.message);
+      return setMessage(result.error || "加入课题组失败。");
     }
     await supabase.auth.updateUser({ data: { preferred_role: "student" } });
     setLoading(false);
@@ -32,7 +37,7 @@ export function JoinGroupForm({ initialInvite = "" }: { initialInvite?: string }
     <form className="profile-form join-group-form" onSubmit={submit}>
       <div className="form-section">
         <label className="field-label" htmlFor="join-group-invite">课题组邀请码</label>
-        <input id="join-group-invite" className="text-input full-input mono" name="invite" defaultValue={initialInvite} placeholder="粘贴导师提供的邀请码" autoComplete="off" required />
+        <input id="join-group-invite" className="text-input full-input mono" name="invite" defaultValue={initialInvite} placeholder="例如 PV-ABCD-EFGH-JKLM" autoComplete="off" required />
       </div>
       {message && <div className="form-message" role="status">{message}</div>}
       <button className="button button-primary" type="submit" disabled={loading}>{loading ? "加入中…" : "加入课题组"}</button>

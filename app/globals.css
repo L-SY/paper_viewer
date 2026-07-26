@@ -439,6 +439,10 @@ h3 { margin-bottom: 4px; font-size: 12px; }
 .invite-form select.text-input { background: white; }
 .invite-result { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 12px; }
 .invite-form > .form-message { margin-top: 10px; }
+.invite-code-card { padding-top: 4px; }
+.invite-code-card .invite-result { margin-top: 0; }
+.invite-code-card .text-input { width: 100%; letter-spacing: .06em; }
+.invite-code-card p { margin: 9px 0 0; color: var(--text-3); font-size: 9px; }
 .group-settings-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; padding-top: 4px; }
 .group-settings-form label { display: flex; flex-direction: column; gap: 6px; color: var(--text-2); font-size: 10px; font-weight: 600; }
 .group-settings-form .text-input { width: 100%; }

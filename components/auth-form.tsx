@@ -106,7 +106,7 @@ export function AuthForm({ initialMode = "signin", initialInvite = "", next = "/
           </label>
         )}
         {mode === "signup" && <label>确认密码<input className="text-input" type="password" name="passwordConfirmation" placeholder="再次输入密码" minLength={8} autoComplete="new-password" required /></label>}
-        {mode === "signup" && <label>课题组邀请码 <span className="optional">可稍后填写</span><input className="text-input mono" type="text" name="invite" defaultValue={initialInvite} placeholder="由导师提供" autoComplete="off" /></label>}
+        {mode === "signup" && <label>课题组邀请码 <span className="optional">学生可选，之后也能填写</span><input className="text-input mono" type="text" name="invite" defaultValue={initialInvite} placeholder="例如 PV-ABCD-EFGH-JKLM" autoComplete="off" /></label>}
         {mode === "signup" && <label className="consent-row"><input type="checkbox" required /><span>我已阅读并同意 <Link href="/privacy" target="_blank">隐私与组内公开说明</Link></span></label>}
         {message && <div className={`form-message${message.success ? " success" : ""}`} role="status">{message.text}</div>}
         <button className="button button-primary" type="submit" disabled={loading}>{loading ? "处理中…" : mode === "signin" ? "登录" : mode === "signup" ? "创建账号" : "发送重置链接"}</button>

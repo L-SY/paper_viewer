@@ -32,7 +32,7 @@ export async function AppShell({ children, surface, navActiveHref }: { children:
           <span className="brand-mark">P</span>
           <span><strong>PaperView</strong><small>月度科研评阅</small></span>
         </Link>
-        <SidebarNav role={role} activeHref={navActiveHref} />
+        <SidebarNav role={role} activeHref={navActiveHref} showGroupSetup={!session.membership} />
         <div className="sidebar-footer">
           <div className="group-chip"><span>{groupMark}</span><div><strong>{groupName}</strong></div></div>
           <AccountFooter configured={session.configured} displayName={displayName} email={email} role={roleLabel} />
