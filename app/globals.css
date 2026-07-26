@@ -241,24 +241,19 @@ h3 { margin-bottom: 4px; font-size: 12px; }
 .review-progress > div { min-width: 0; padding: 10px 11px; background: #fcfcfb; }
 .review-progress span { color: var(--text-3); font-size: 8px; font-weight: 650; }
 .review-progress p { margin: 5px 0 0; color: #55534f; font-size: 9px; line-height: 1.6; }
-.radar-and-scores { display: grid; grid-template-columns: minmax(170px, .9fr) minmax(170px, 1.1fr); align-items: center; gap: 8px; }
-.radar-wrap { height: 205px; }
-.css-radar { position: relative; width: 205px; height: 205px; margin: 0 auto; }
-.radar-grid, .radar-value { position: absolute; inset: 18%; clip-path: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%); }
-.radar-grid { border: 1px solid var(--border-strong); background: transparent; }
-.radar-grid.ring-middle { inset: 29%; }
-.radar-grid.ring-inner { inset: 40%; }
-.radar-axis { position: absolute; left: 18%; right: 18%; top: 50%; height: 1px; background: var(--border); transform-origin: center; }
-.radar-axis.axis-two { transform: rotate(60deg); }
-.radar-axis.axis-three { transform: rotate(-60deg); }
-.radar-value { inset: 0; background: rgb(59 91 219 / 14%); outline: 1px solid var(--blue); }
-.radar-label { position: absolute; color: var(--text-3); font-size: 8px; white-space: nowrap; transform: translate(-50%, -50%); }
-.radar-label.label-1 { left: 50%; top: 4%; }
-.radar-label.label-2 { left: 91%; top: 27%; }
-.radar-label.label-3 { left: 91%; top: 74%; }
-.radar-label.label-4 { left: 50%; top: 96%; }
-.radar-label.label-5 { left: 9%; top: 74%; }
-.radar-label.label-6 { left: 9%; top: 27%; }
+.radar-and-scores { display: grid; grid-template-columns: minmax(220px, .9fr) minmax(170px, 1.1fr); align-items: center; gap: 16px; }
+.radar-wrap { min-height: 258px; display: grid; place-items: center; }
+.radar-figure { width: min(100%, 258px); margin: 0; text-align: center; }
+.css-radar { display: block; width: 100%; height: auto; overflow: visible; }
+.radar-svg-ring { fill: none; stroke: #d9dce5; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.radar-svg-ring.outer { stroke: #bfc5d3; }
+.radar-svg-axis { stroke: #d9dce5; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.radar-svg-value { fill: rgb(59 91 219 / 15%); stroke: var(--blue); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.radar-svg-point { fill: #fff; stroke: var(--blue); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.radar-svg-label { fill: var(--text-2); font-family: var(--font-geist-sans); }
+.radar-svg-label-name { font-size: 10px; font-weight: 650; }
+.radar-svg-label-value { fill: var(--text-3); font-size: 8px; font-weight: 500; }
+.radar-figure figcaption { margin-top: -2px; color: var(--text-3); font-size: 8px; line-height: 1.5; }
 .score-list { display: flex; flex-direction: column; gap: 8px; }
 .dimension-row { display: grid; grid-template-columns: 1fr 64px; align-items: center; gap: 8px; }
 .dimension-row > div { height: 3px; grid-column: 1 / -1; background: var(--surface); overflow: hidden; }
